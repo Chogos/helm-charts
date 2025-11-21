@@ -1,0 +1,228 @@
+# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+replicaCount: 1
+
+# Application-specific configuration
+app:
+  # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+  image:
+    repository: ""
+    # This sets the pull policy for images.
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  # Container port for the application
+  containerPort: 8080
+
+# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+imagePullSecrets: []
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
+# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# This is for setting Kubernetes Annotations to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+podAnnotations: {}
+
+# This is for setting Kubernetes Labels to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+podLabels: {}
+
+podSecurityContext: {}
+# Example:
+# podSecurityContext:
+#   runAsUser: 1000
+#   runAsGroup: 1000
+#   fsGroup: 1000
+
+securityContext: {}
+# Example:
+# securityContext:
+#   allowPrivilegeEscalation: false
+#   runAsUser: 1000
+#   runAsGroup: 1000
+#   readOnlyRootFilesystem: true
+#   capabilities:
+#     drop:
+#     - ALL
+
+# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+service:
+  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  type: ClusterIP
+  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
+  port: 80
+
+# This section is for setting up a ConfigMap more information can be found here: https://kubernetes.io/docs/concepts/configuration/configmap/
+configmap:
+  # Specifies whether a ConfigMap should be created
+  enabled: false
+  # The name of the ConfigMap to use. If not set and enabled is true, a name is generated using the fullname template
+  name: ""
+  # ConfigMap annotations
+  annotations: {}
+  # ConfigMap labels
+  labels: {}
+  # Data contains the configuration data. Each key-value pair in the data map will be projected into the ConfigMap.
+  data: {}
+  # BinaryData contains the binary configuration data. Each key-value pair in the binaryData map will be projected into the ConfigMap.
+  binaryData: {}
+
+# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+# -- Expose the service via gateway-api HTTPRoute
+# Requires Gateway API resources and suitable controller installed within the cluster
+# (see: https://gateway-api.sigs.k8s.io/guides/)
+httpRoute:
+  # HTTPRoute enabled.
+  enabled: false
+  # HTTPRoute annotations.
+  annotations: {}
+  # Which Gateways this Route is attached to.
+  parentRefs:
+  - name: gateway
+    sectionName: http
+    # namespace: default
+  # Hostnames matching HTTP header.
+  hostnames:
+  - chart-example.local
+  # List of rules and filters applied.
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /headers
+
+resources: {}
+
+# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# Example:
+# volumes:
+# - name: config-volume
+#   configMap:
+#     name: my-config
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# Example:
+# volumeMounts:
+# - name: config-volume
+#   mountPath: /etc/config
+
+# Persistent Volume Claims configuration
+# Each PVC will be created and mounted on the pods
+persistentVolumes: []
+# Example:
+# persistentVolumes:
+#   - name: data
+#     mountPath: /data
+#     storageClassName: standard
+#     accessModes:
+#       - ReadWriteOnce
+#     storage: 10Gi
+
+nodeSelector: {}
+# Example:
+# nodeSelector:
+#   kubernetes.io/os: linux
+
+tolerations: []
+# Example:
+# tolerations:
+# - key: "key1"
+#   operator: "Equal"
+#   value: "value1"
+#   effect: "NoSchedule"
+
+affinity: {}
+# Example:
+# affinity:
+#   nodeAffinity:
+#     requiredDuringSchedulingIgnoredDuringExecution:
+#       nodeSelectorTerms:
+#       - matchExpressions:
+#         - key: kubernetes.io/os
+#           operator: In
+#           values:
+#           - linux
+
+# This section is for setting up a Pod Disruption Budget more information can be found here: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
+podDisruptionBudget:
+  # Specifies whether a PodDisruptionBudget should be created
+  enabled: false
+  # Minimum number of pods that must be available after eviction, mutually exclusive with maxUnavailable
+  minAvailable: 1
+  # Maximum number of pods that can be unavailable after eviction, mutually exclusive with minAvailable
+  maxUnavailable: ""
+  # PDB annotations
+  annotations: {}
+  # PDB labels
+  labels: {}
+
+# This section is for setting up PrometheusRule resources more information can be found here: https://prometheus-operator.dev/docs/operator/api/#prometheusrule
+prometheusRule:
+  # Specifies whether PrometheusRule resources should be created
+  enabled: false
+  # The prometheus label used to match which Prometheus instances should load these rules
+  prometheusLabel: ""
+  # List of PrometheusRule configurations
+  rules: []
+  # Example:
+  # rules:
+  #   - name: example-alerts
+  #     groups:
+  #       - name: example
+  #         rules:
+  #           - alert: HighRequestLatency
+  #             expr: http_request_duration_seconds{quantile="0.5"} > 0.5
+  #             for: 10m
+  #             labels:
+  #               severity: warning
+  #             annotations:
+  #               summary: High request latency
+  #   - name: example-recordings
+  #     groups:
+  #       - name: example
+  #         rules:
+  #           - record: job:http_requests_total:rate5m
+  #             expr: rate(http_requests_total[5m])

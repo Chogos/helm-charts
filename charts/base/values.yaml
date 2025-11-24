@@ -1,9 +1,11 @@
-# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+# This will set the replicaset count more information can be found here:
+# https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1
 
 # Application-specific configuration
 app:
-  # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+  # This sets the container image more information can be found here:
+  # https://kubernetes.io/docs/concepts/containers/images/
   image:
     repository: ""
     # This sets the pull policy for images.
@@ -13,13 +15,15 @@ app:
   # Container port for the application
   containerPort: 8080
 
-# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+# This is for the secrets for pulling an image from a private repository more information can be found here:
+# https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
 # This is to override the chart name.
 nameOverride: ""
 fullnameOverride: ""
 
-# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+# This section builds out the service account more information can be found here:
+# https://kubernetes.io/docs/concepts/security/service-accounts/
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -32,11 +36,13 @@ serviceAccount:
   name: ""
 
 # This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+# For more information checkout:
+# https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 podAnnotations: {}
 
 # This is for setting Kubernetes Labels to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+# For more information checkout:
+# https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
 podLabels: {}
 
 podSecurityContext:
@@ -53,14 +59,18 @@ securityContext:
     drop:
     - ALL
 
-# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+# This is for setting up a service more information can be found here:
+# https://kubernetes.io/docs/concepts/services-networking/service/
 service:
-  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  # This sets the service type more information can be found here:
+  # https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
-  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
+  # This sets the ports more information can be found here:
+  # https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
   port: 80
 
-# This section is for setting up a ConfigMap more information can be found here: https://kubernetes.io/docs/concepts/configuration/configmap/
+# This section is for setting up a ConfigMap more information can be found here:
+# https://kubernetes.io/docs/concepts/configuration/configmap/
 configmap:
   # Specifies whether a ConfigMap should be created
   enabled: false
@@ -75,7 +85,8 @@ configmap:
   # BinaryData contains the binary configuration data. Each key-value pair in the binaryData map will be projected into the ConfigMap.
   binaryData: {}
 
-# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+# This block is for setting up the ingress for more information can be found here:
+# https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
   enabled: false
   className: ""
@@ -119,17 +130,28 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
-# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-livenessProbe:
-  httpGet:
-    path: /
-    port: http
-readinessProbe:
-  httpGet:
-    path: /
-    port: http
+# This is to setup the liveness and readiness probes more information can be found here:
+# https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe: {}
+  # Example:
+  # httpGet:
+  #   path: /
+  #   port: http
+readinessProbe: {}
+  # Example:
+  # httpGet:
+  #   path: /
+  #   port: http
+startupProbe: {}
+  # Example:
+  # httpGet:
+  #   path: /
+  #   port: http
+  # failureThreshold: 30
+  # periodSeconds: 10
 
-# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+# This section is for setting up autoscaling more information can be found here:
+# https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:
   enabled: false
   minReplicas: 1
@@ -219,7 +241,8 @@ affinity:
   #         values:
   #         - linux
 
-# This section is for setting up a Pod Disruption Budget more information can be found here: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
+# This section is for setting up a Pod Disruption Budget more information can be found here:
+# https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
 podDisruptionBudget:
   # Specifies whether a PodDisruptionBudget should be created
   enabled: false
@@ -232,7 +255,8 @@ podDisruptionBudget:
   # PDB labels
   labels: {}
 
-# This section is for setting up PrometheusRule resources more information can be found here: https://prometheus-operator.dev/docs/operator/api/#prometheusrule
+# This section is for setting up PrometheusRule resources more information can be found here:
+# https://prometheus-operator.dev/docs/operator/api/#prometheusrule
 prometheusRule:
   # Specifies whether PrometheusRule resources should be created
   enabled: false

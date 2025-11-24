@@ -2,10 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "base.fullname" . }}
-  {{- if .Values.configmap.name }}
-  name: {{ .Values.configmap.name }}
-  {{- end }}
+  name: {{ .Values.configmap.name | default (include "base.fullname" .) }}
   labels:
     {{- include "base.labels" . | nindent 4 }}
     {{- with .Values.configmap.labels }}

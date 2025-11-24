@@ -111,6 +111,13 @@ httpRoute:
         value: /headers
 
 resources: {}
+  # Example:
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
 
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe:
@@ -130,57 +137,87 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 80
 
-# Additional volumes on the output Deployment definition.
 volumes: []
 # Example:
-# volumes:
 # - name: config-volume
 #   configMap:
 #     name: my-config
+# - name: secret-volume
+#   secret:
+#     secretName: my-secret
+# - name: cache-volume
+#   emptyDir: {}
+# - name: host-volume
+#   hostPath:
+#     path: /data
+#     type: Directory
+# - name: podinfo
+#   downwardAPI:
+#     items:
+#     - path: "labels"
+#       fieldRef:
+#         fieldPath: metadata.labels
+# - name: projected-volume
+#   projected:
+#     sources:
+#     - secret:
+#         name: mysecret
+#         items:
+#         - key: username
+#           path: my-group/my-username
+#     - configMap:
+#         name: myconfigmap
+#         items:
+#         - key: config
+#           path: my-group/my-config
 
 # Additional volumeMounts on the output Deployment definition.
 volumeMounts: []
 # Example:
-# volumeMounts:
 # - name: config-volume
 #   mountPath: /etc/config
+# - name: secret-volume
+#   mountPath: /etc/secrets
+#   readOnly: true
+# - name: cache-volume
+#   mountPath: /tmp/cache
+# - name: host-volume
+#   mountPath: /mnt/data
+# - name: podinfo
+#   mountPath: /etc/podinfo
+# - name: projected-volume
+#   mountPath: /etc/projected
 
-# Persistent Volume Claims configuration
-# Each PVC will be created and mounted on the pods
 persistentVolumes: []
-# Example:
-# persistentVolumes:
-#   - name: data
-#     mountPath: /data
-#     storageClassName: standard
-#     accessModes:
-#       - ReadWriteOnce
-#     storage: 10Gi
+  # Example:
+  # - name: data
+  #   mountPath: /data
+  #   storageClassName: standard
+  #   accessModes:
+  #     - ReadWriteOnce
+  #   storage: 10Gi
 
 nodeSelector: {}
-# Example:
-# nodeSelector:
-#   kubernetes.io/os: linux
+  # Example:
+  # kubernetes.io/os: linux
 
 tolerations: []
 # Example:
-# tolerations:
 # - key: "key1"
 #   operator: "Equal"
 #   value: "value1"
 #   effect: "NoSchedule"
 
-affinity: {}
-# Example:
-# affinity:
-#   nodeAffinity:
-#     requiredDuringSchedulingIgnoredDuringExecution:
-#       nodeSelectorTerms:
-#       - matchExpressions:
-#         - key: kubernetes.io/os
-#           operator: In
-#           values:
-#           - linux
+affinity:
+  # Example:
+  # nodeAffinity:
+  #   requiredDuringSchedulingIgnoredDuringExecution:
+  #     nodeSelectorTerms:
+  #     - matchExpressions:
+  #       - key: kubernetes.io/os
+  #         operator: In
+  #         values:
+  #         - linux
 
 # This section is for setting up a Pod Disruption Budget more information can be found here: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
 podDisruptionBudget:

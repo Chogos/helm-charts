@@ -32,6 +32,6 @@ spec:
       backendRefs:
         - name: {{ $fullName }}
           port: {{ .port | default (index $.Values.service.ports 0).port }}
-          weight: 1
+          weight: {{ .weight | default 1 }}
     {{- end }}
 {{- end }}

@@ -198,6 +198,9 @@ httpRoute:
     # port specifies which service port to use (by port number).
     # If not set, uses the first port in service.ports.
     # port: 80
+    # weight specifies the proportion of requests forwarded to the referenced backend.
+    # If not set, defaults to 1.
+    # weight: 1
 
 resources: {}
   # Example:

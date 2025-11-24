@@ -1,4 +1,4 @@
-{{- if .Values.prometheusRule.enabled }}
+{{- if and .Values.prometheusRule.enabled .Values.prometheusRule.rules }}
 {{- range .Values.prometheusRule.rules }}
 ---
 apiVersion: monitoring.coreos.com/v1
@@ -7,8 +7,8 @@ metadata:
   name: {{ include "base.fullname" $ }}-{{ .name }}
   labels:
     {{- include "base.labels" $ | nindent 4 }}
-{{- if .Values.prometheusRule.prometheusLabel }}
-    prometheus: {{ .Values.prometheusRule.prometheusLabel }}
+{{- if $.Values.prometheusRule.prometheusLabel }}
+    prometheus: {{ $.Values.prometheusRule.prometheusLabel }}
 {{- end }}
     role: alert-rules
 spec:

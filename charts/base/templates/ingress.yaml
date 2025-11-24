@@ -37,7 +37,7 @@ spec:
               service:
                 name: {{ include "base.fullname" $ }}
                 port:
-                  number: {{ $.Values.service.port }}
+                  number: {{ .port | default (index $.Values.service.ports 0).port }}
           {{- end }}
     {{- end }}
 {{- end }}

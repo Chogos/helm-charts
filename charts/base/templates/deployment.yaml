@@ -41,9 +41,11 @@ spec:
           image: "{{ required "app.image.repository is required" .Values.app.image.repository }}:{{ .Values.app.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.app.image.pullPolicy }}
           ports:
-            - name: http
-              containerPort: {{ required "app.containerPort is required" .Values.app.containerPort }}
-              protocol: TCP
+            {{- range .Values.app.ports }}
+            - name: {{ .name }}
+              containerPort: {{ .containerPort }}
+              protocol: {{ .protocol }}
+            {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

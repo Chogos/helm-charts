@@ -12,8 +12,11 @@ app:
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
-  # Container port for the application
-  containerPort: 8080
+  # Container ports for the application. Each port requires a name, containerPort, and protocol.
+  ports:
+    - name: http
+      containerPort: 8080
+      protocol: TCP
 
 # This is for the secrets for pulling an image from a private repository more information can be found here:
 # https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
@@ -67,7 +70,12 @@ service:
   type: ClusterIP
   # This sets the ports more information can be found here:
   # https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 80
+  # Each port requires a name, port, targetPort (references port name from app.ports), and protocol.
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
   # Annotations to add to the service
   annotations: {}
 
@@ -98,6 +106,9 @@ ingress:
       paths:
         - path: /
           pathType: ImplementationSpecific
+          # port specifies which service port to use (by port number).
+          # If not set, uses the first port in service.ports.
+          # port: 80
   tls: []
 
 # -- Expose the service via gateway-api HTTPRoute
@@ -122,6 +133,9 @@ httpRoute:
     - path:
         type: PathPrefix
         value: /headers
+    # port specifies which service port to use (by port number).
+    # If not set, uses the first port in service.ports.
+    # port: 80
 
 resources: {}
   # Example:

@@ -1,4 +1,7 @@
 {{- if .Values.podDisruptionBudget.enabled }}
+{{- if not (or .Values.podDisruptionBudget.minAvailable .Values.podDisruptionBudget.maxUnavailable) }}
+  {{- fail "PodDisruptionBudget is enabled but neither minAvailable nor maxUnavailable is set. Please configure one of these values." }}
+{{- end }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:

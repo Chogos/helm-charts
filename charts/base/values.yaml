@@ -226,7 +226,7 @@ podDisruptionBudget:
   # Minimum number of pods that must be available after eviction, mutually exclusive with maxUnavailable
   minAvailable: 1
   # Maximum number of pods that can be unavailable after eviction, mutually exclusive with minAvailable
-  maxUnavailable: ""
+  maxUnavailable: null
   # PDB annotations
   annotations: {}
   # PDB labels

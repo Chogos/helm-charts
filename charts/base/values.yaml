@@ -369,8 +369,112 @@ podDisruptionBudget:
   # PDB labels
   labels: {}
 
+# This section is for setting up a ServiceMonitor for Prometheus Operator more information can be found here:
+# https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.ServiceMonitorSpec
+serviceMonitor:
+  # Specifies whether a ServiceMonitor should be created
+  enabled: false
+  # ServiceMonitor annotations
+  annotations: {}
+  # ServiceMonitor labels (in addition to default labels)
+  labels: {}
+  # The label to use to retrieve the job name from
+  jobLabel: ""
+  # Additional selector labels to match services
+  selector: {}
+  # List of endpoints to scrape metrics from
+  endpoints:
+    - port: http
+      # Interval at which metrics should be scraped (e.g., 30s, 1m)
+      interval: 30s
+      # Timeout after which the scrape is ended (e.g., 10s)
+      scrapeTimeout: 10s
+      # HTTP path to scrape for metrics
+      path: /metrics
+      # HTTP scheme to use for scraping (http or https)
+      scheme: http
+      # Honor labels from the scraped metrics
+      honorLabels: false
+      # Honor timestamps from the scraped metrics
+      honorTimestamps: true
+      # Optional: Enable HTTP2 for scraping
+      # enableHttp2: true
+      # Optional: Follow redirects during scraping
+      # followRedirects: true
+      # Optional: Additional parameters for the scrape request
+      # params: {}
+      # Optional: Relabeling configs to apply to samples before ingestion
+      # relabelings: []
+      # Optional: MetricRelabelings to apply to samples before ingestion
+      # metricRelabelings: []
+      # Optional: TLS configuration for scraping
+      # tlsConfig: {}
+      # Optional: Basic authentication for scraping
+      # basicAuth: {}
+      # Optional: Bearer token file for authentication
+      # bearerTokenFile: ""
+      # Optional: Bearer token secret for authentication
+      # bearerTokenSecret: {}
+      # Optional: OAuth2 configuration for scraping
+      # oauth2: {}
+      # Optional: Authorization configuration for scraping
+      # authorization: {}
+      # Optional: Proxy URL for scraping
+      # proxyUrl: ""
+      # Optional: Filter running targets
+      # filterRunning: true
+  # Attach metadata to discovered targets
+  # attachMetadata:
+  #   node: false
+  # Namespace selector for the ServiceMonitor
+  # namespaceSelector: {}
+  # Target labels to transfer from the Kubernetes Service onto the target
+  # targetLabels: []
+  # Pod target labels to transfer from the Kubernetes Pod onto the target
+  # podTargetLabels: []
+  # Sample limit per scrape
+  # sampleLimit: 0
+  # Target limit for this ServiceMonitor
+  # targetLimit: 0
+  # Label limit per scrape
+  # labelLimit: 0
+  # Label name length limit per scrape
+  # labelNameLengthLimit: 0
+  # Label value length limit per scrape
+  # labelValueLengthLimit: 0
+  # Keep dropped targets (for debugging)
+  # keepDroppedTargets: 0
+  # Scrape class name to use
+  # scrapeClassName: ""
+  # Scrape protocols to use (e.g., OpenMetricsText1.0.0, PrometheusText0.0.4)
+  # scrapeProtocols: []
+  # Body size limit for scrapes
+  # bodySizeLimit: ""
+  # Example:
+  # endpoints:
+  #   - port: metrics
+  #     interval: 30s
+  #     path: /metrics
+  #     scheme: https
+  #     tlsConfig:
+  #       insecureSkipVerify: true
+  #     relabelings:
+  #       - sourceLabels: [__meta_kubernetes_pod_name]
+  #         targetLabel: pod
+  #       - sourceLabels: [__meta_kubernetes_namespace]
+  #         targetLabel: namespace
+  #     metricRelabelings:
+  #       - sourceLabels: [__name__]
+  #         regex: 'go_.*'
+  #         action: drop
+  #     authorization:
+  #       type: Bearer
+  #       credentials:
+  #         name: my-secret
+  #         key: token
+
 # This section is for setting up PrometheusRule resources more information can be found here:
-# https://prometheus-operator.dev/docs/operator/api/#prometheusrule
+# https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule
 prometheusRule:
   # Specifies whether PrometheusRule resources should be created
   enabled: false

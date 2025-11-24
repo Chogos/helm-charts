@@ -1,0 +1,138 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "base.fullname" . }}
+  labels:
+    {{- include "base.labels" . | nindent 4 }}
+  {{- with .Values.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.serviceMonitor.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.serviceMonitor.jobLabel }}
+  jobLabel: {{ .Values.serviceMonitor.jobLabel }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "base.selectorLabels" . | nindent 6 }}
+    {{- with .Values.serviceMonitor.selector }}
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  endpoints:
+  {{- range .Values.serviceMonitor.endpoints }}
+    - port: {{ .port }}
+      {{- if .interval }}
+      interval: {{ .interval }}
+      {{- end }}
+      {{- if .scrapeTimeout }}
+      scrapeTimeout: {{ .scrapeTimeout }}
+      {{- end }}
+      {{- if .path }}
+      path: {{ .path }}
+      {{- end }}
+      {{- if .scheme }}
+      scheme: {{ .scheme }}
+      {{- end }}
+      {{- if hasKey . "honorLabels" }}
+      honorLabels: {{ .honorLabels }}
+      {{- end }}
+      {{- if hasKey . "honorTimestamps" }}
+      honorTimestamps: {{ .honorTimestamps }}
+      {{- end }}
+      {{- if hasKey . "enableHttp2" }}
+      enableHttp2: {{ .enableHttp2 }}
+      {{- end }}
+      {{- if hasKey . "followRedirects" }}
+      followRedirects: {{ .followRedirects }}
+      {{- end }}
+      {{- if hasKey . "filterRunning" }}
+      filterRunning: {{ .filterRunning }}
+      {{- end }}
+      {{- if .params }}
+      params:
+        {{- toYaml .params | nindent 8 }}
+      {{- end }}
+      {{- if .relabelings }}
+      relabelings:
+        {{- toYaml .relabelings | nindent 8 }}
+      {{- end }}
+      {{- if .metricRelabelings }}
+      metricRelabelings:
+        {{- toYaml .metricRelabelings | nindent 8 }}
+      {{- end }}
+      {{- if .tlsConfig }}
+      tlsConfig:
+        {{- toYaml .tlsConfig | nindent 8 }}
+      {{- end }}
+      {{- if .basicAuth }}
+      basicAuth:
+        {{- toYaml .basicAuth | nindent 8 }}
+      {{- end }}
+      {{- if .oauth2 }}
+      oauth2:
+        {{- toYaml .oauth2 | nindent 8 }}
+      {{- end }}
+      {{- if .authorization }}
+      authorization:
+        {{- toYaml .authorization | nindent 8 }}
+      {{- end }}
+      {{- if .bearerTokenFile }}
+      bearerTokenFile: {{ .bearerTokenFile }}
+      {{- end }}
+      {{- if .bearerTokenSecret }}
+      bearerTokenSecret:
+        {{- toYaml .bearerTokenSecret | nindent 8 }}
+      {{- end }}
+      {{- if .proxyUrl }}
+      proxyUrl: {{ .proxyUrl }}
+      {{- end }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.attachMetadata }}
+  attachMetadata:
+    {{- toYaml .Values.serviceMonitor.attachMetadata | nindent 4 }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.namespaceSelector }}
+  namespaceSelector:
+    {{- toYaml .Values.serviceMonitor.namespaceSelector | nindent 4 }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.targetLabels }}
+  targetLabels:
+    {{- toYaml .Values.serviceMonitor.targetLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.podTargetLabels }}
+  podTargetLabels:
+    {{- toYaml .Values.serviceMonitor.podTargetLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.sampleLimit }}
+  sampleLimit: {{ .Values.serviceMonitor.sampleLimit }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.targetLimit }}
+  targetLimit: {{ .Values.serviceMonitor.targetLimit }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.labelLimit }}
+  labelLimit: {{ .Values.serviceMonitor.labelLimit }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.labelNameLengthLimit }}
+  labelNameLengthLimit: {{ .Values.serviceMonitor.labelNameLengthLimit }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.labelValueLengthLimit }}
+  labelValueLengthLimit: {{ .Values.serviceMonitor.labelValueLengthLimit }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.keepDroppedTargets }}
+  keepDroppedTargets: {{ .Values.serviceMonitor.keepDroppedTargets }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.scrapeClassName }}
+  scrapeClassName: {{ .Values.serviceMonitor.scrapeClassName }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.scrapeProtocols }}
+  scrapeProtocols:
+    {{- toYaml .Values.serviceMonitor.scrapeProtocols | nindent 4 }}
+  {{- end }}
+  {{- if .Values.serviceMonitor.bodySizeLimit }}
+  bodySizeLimit: {{ .Values.serviceMonitor.bodySizeLimit }}
+  {{- end }}
+{{- end }}

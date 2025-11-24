@@ -17,6 +17,50 @@ app:
     - name: http
       containerPort: 8080
       protocol: TCP
+  # Environment variables for the container. More information can be found here:
+  # https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/
+  env: []
+  # Example:
+  # - name: MY_ENV_VAR
+  #   value: "my-value"
+  # - name: SECRET_USERNAME
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: my-secret
+  #       key: username
+  # - name: CONFIG_KEY
+  #   valueFrom:
+  #     configMapKeyRef:
+  #       name: my-config
+  #       key: special.key
+  # - name: NODE_NAME
+  #   valueFrom:
+  #     fieldRef:
+  #       fieldPath: spec.nodeName
+  # - name: POD_IP
+  #   valueFrom:
+  #     fieldRef:
+  #       fieldPath: status.podIP
+  # - name: CPU_REQUEST
+  #   valueFrom:
+  #     resourceFieldRef:
+  #       containerName: container-name
+  #       resource: requests.cpu
+  # List of sources to populate environment variables in the container.
+  # More information can be found here:
+  # https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables
+  envFrom: []
+  # Example:
+  # - configMapRef:
+  #     name: my-config
+  # - secretRef:
+  #     name: my-secret
+  # - prefix: DB_
+  #   configMapRef:
+  #     name: database-config
+  # - prefix: APP_
+  #   secretRef:
+  #     name: app-secret
 
 # This is for the secrets for pulling an image from a private repository more information can be found here:
 # https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/

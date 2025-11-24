@@ -1,4 +1,32 @@
 {{- if .Values.autoscaling.enabled }}
+{{- /* Validate that at least one metric is defined */ -}}
+{{- if not (or .Values.autoscaling.targetCPUUtilizationPercentage .Values.autoscaling.targetMemoryUtilizationPercentage) }}
+{{- fail "autoscaling.enabled is true but no metrics are defined. Set at least one of autoscaling.targetCPUUtilizationPercentage or autoscaling.targetMemoryUtilizationPercentage" }}
+{{- end }}
+{{- /* Validate minReplicas is a positive integer */ -}}
+{{- if lt (int .Values.autoscaling.minReplicas) 1 }}
+{{- fail (printf "autoscaling.minReplicas must be a positive integer (got: %v)" .Values.autoscaling.minReplicas) }}
+{{- end }}
+{{- /* Validate maxReplicas is a positive integer */ -}}
+{{- if lt (int .Values.autoscaling.maxReplicas) 1 }}
+{{- fail (printf "autoscaling.maxReplicas must be a positive integer (got: %v)" .Values.autoscaling.maxReplicas) }}
+{{- end }}
+{{- /* Validate maxReplicas >= minReplicas */ -}}
+{{- if lt (int .Values.autoscaling.maxReplicas) (int .Values.autoscaling.minReplicas) }}
+{{- fail (printf "autoscaling.maxReplicas (%d) must be greater than or equal to autoscaling.minReplicas (%d)" (int .Values.autoscaling.maxReplicas) (int .Values.autoscaling.minReplicas)) }}
+{{- end }}
+{{- /* Validate CPU percentage is in valid range (1-100) */ -}}
+{{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+{{- if or (lt (int .Values.autoscaling.targetCPUUtilizationPercentage) 1) (gt (int .Values.autoscaling.targetCPUUtilizationPercentage) 100) }}
+{{- fail (printf "autoscaling.targetCPUUtilizationPercentage must be between 1 and 100 (got: %d)" (int .Values.autoscaling.targetCPUUtilizationPercentage)) }}
+{{- end }}
+{{- end }}
+{{- /* Validate memory percentage is in valid range (1-100) */ -}}
+{{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+{{- if or (lt (int .Values.autoscaling.targetMemoryUtilizationPercentage) 1) (gt (int .Values.autoscaling.targetMemoryUtilizationPercentage) 100) }}
+{{- fail (printf "autoscaling.targetMemoryUtilizationPercentage must be between 1 and 100 (got: %d)" (int .Values.autoscaling.targetMemoryUtilizationPercentage)) }}
+{{- end }}
+{{- end }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

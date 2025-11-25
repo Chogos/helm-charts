@@ -1,7 +1,7 @@
 {{- if .Values.autoscaling.enabled }}
 {{- /* Validate that at least one metric is defined */ -}}
-{{- if not (or .Values.autoscaling.targetCPUUtilizationPercentage .Values.autoscaling.targetMemoryUtilizationPercentage) }}
-{{- fail "autoscaling.enabled is true but no metrics are defined. Set at least one of autoscaling.targetCPUUtilizationPercentage or autoscaling.targetMemoryUtilizationPercentage" }}
+{{- if not (or .Values.autoscaling.targetCPUUtilizationPercentage .Values.autoscaling.targetMemoryUtilizationPercentage .Values.autoscaling.customMetrics .Values.autoscaling.containerMetrics) }}
+{{- fail "autoscaling.enabled is true but no metrics are defined. Set at least one of: autoscaling.targetCPUUtilizationPercentage, autoscaling.targetMemoryUtilizationPercentage, autoscaling.customMetrics, or autoscaling.containerMetrics" }}
 {{- end }}
 {{- /* Validate minReplicas is a positive integer */ -}}
 {{- if lt (int .Values.autoscaling.minReplicas) 1 }}
@@ -40,6 +40,35 @@ spec:
     name: {{ include "base.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  {{- if .Values.autoscaling.behavior }}
+  behavior:
+    {{- if .Values.autoscaling.behavior.scaleDown }}
+    scaleDown:
+      {{- if .Values.autoscaling.behavior.scaleDown.stabilizationWindowSeconds }}
+      stabilizationWindowSeconds: {{ .Values.autoscaling.behavior.scaleDown.stabilizationWindowSeconds }}
+      {{- end }}
+      {{- if .Values.autoscaling.behavior.scaleDown.policies }}
+      policies:
+      {{- toYaml .Values.autoscaling.behavior.scaleDown.policies | nindent 6 }}
+      {{- end }}
+      {{- if .Values.autoscaling.behavior.scaleDown.selectPolicy }}
+      selectPolicy: {{ .Values.autoscaling.behavior.scaleDown.selectPolicy }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.autoscaling.behavior.scaleUp }}
+    scaleUp:
+      {{- if .Values.autoscaling.behavior.scaleUp.stabilizationWindowSeconds }}
+      stabilizationWindowSeconds: {{ .Values.autoscaling.behavior.scaleUp.stabilizationWindowSeconds }}
+      {{- end }}
+      {{- if .Values.autoscaling.behavior.scaleUp.policies }}
+      policies:
+      {{- toYaml .Values.autoscaling.behavior.scaleUp.policies | nindent 6 }}
+      {{- end }}
+      {{- if .Values.autoscaling.behavior.scaleUp.selectPolicy }}
+      selectPolicy: {{ .Values.autoscaling.behavior.scaleUp.selectPolicy }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
   metrics:
     {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
     - type: Resource
@@ -56,5 +85,11 @@ spec:
         target:
           type: Utilization
           averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.autoscaling.customMetrics }}
+    {{- toYaml .Values.autoscaling.customMetrics | nindent 4 }}
+    {{- end }}
+    {{- if .Values.autoscaling.containerMetrics }}
+    {{- toYaml .Values.autoscaling.containerMetrics | nindent 4 }}
     {{- end }}
 {{- end }}

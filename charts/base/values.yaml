@@ -384,6 +384,81 @@ autoscaling:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 80
+  # Scaling behavior controls how fast the HPA scales up/down
+  # More info: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#configurable-scaling-behavior
+  behavior:
+    scaleDown:
+      # Stabilization window prevents flapping by waiting before scaling down
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      # selectPolicy: Max (default) chooses the policy that scales down the most
+      # Use Min to scale down conservatively
+      selectPolicy: Max
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 30
+      - type: Pods
+        value: 4
+        periodSeconds: 30
+      selectPolicy: Max
+  # Custom metrics for more advanced scaling scenarios
+  # Requires metrics-server and/or custom metrics API (like Prometheus adapter)
+  customMetrics: []
+  # Examples:
+  # - type: Pods
+  #   pods:
+  #     metric:
+  #       name: http_requests_per_second
+  #     target:
+  #       type: AverageValue
+  #       averageValue: "1000"
+  # - type: Object
+  #   object:
+  #     metric:
+  #       name: requests-per-second
+  #     describedObject:
+  #       apiVersion: networking.k8s.io/v1
+  #       kind: Ingress
+  #       name: main-route
+  #     target:
+  #       type: Value
+  #       value: "10k"
+  # - type: External
+  #   external:
+  #     metric:
+  #       name: queue_messages_ready
+  #       selector:
+  #         matchLabels:
+  #           queue: worker_tasks
+  #     target:
+  #       type: AverageValue
+  #       averageValue: "30"
+  # Container resource metrics allow targeting specific containers in multi-container pods
+  containerMetrics: []
+  # Examples:
+  # - type: ContainerResource
+  #   containerResource:
+  #     name: cpu
+  #     container: application
+  #     target:
+  #       type: Utilization
+  #       averageUtilization: 75
+  # - type: ContainerResource
+  #   containerResource:
+  #     name: memory
+  #     container: application
+  #     target:
+  #       type: Utilization
+  #       averageUtilization: 80
 
 volumes: []
 # Example:

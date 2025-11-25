@@ -80,6 +80,47 @@ initContainers: []
 #   - name: workdir
 #     mountPath: /work-dir
 
+# Sidecar containers run alongside the main application container in the same Pod.
+# More information can be found here:
+# https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/
+sidecars: []
+# Example:
+# - name: log-shipper
+#   image: fluent/fluent-bit:2.0
+#   env:
+#   - name: FLUENT_ELASTICSEARCH_HOST
+#     value: "elasticsearch"
+#   - name: FLUENT_ELASTICSEARCH_PORT
+#     value: "9200"
+#   volumeMounts:
+#   - name: varlog
+#     mountPath: /var/log
+#   resources:
+#     limits:
+#       memory: "128Mi"
+#       cpu: "100m"
+#     requests:
+#       memory: "64Mi"
+#       cpu: "50m"
+# - name: metrics-exporter
+#   image: prom/statsd-exporter:v0.26.0
+#   ports:
+#   - name: metrics
+#     containerPort: 9102
+#     protocol: TCP
+#   args:
+#   - "--statsd.mapping-config=/etc/statsd/statsd-mapping.conf"
+#   volumeMounts:
+#   - name: statsd-config
+#     mountPath: /etc/statsd
+#   resources:
+#     limits:
+#       memory: "64Mi"
+#       cpu: "50m"
+#     requests:
+#       memory: "32Mi"
+#       cpu: "25m"
+
 # This is for the secrets for pulling an image from a private repository more information can be found here:
 # https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []

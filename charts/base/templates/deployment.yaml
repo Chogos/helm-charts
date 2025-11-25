@@ -84,6 +84,9 @@ spec:
               mountPath: {{ .mountPath }}
             {{- end }}
           {{- end }}
+        {{- with .Values.sidecars }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- if or (.Values.volumes) (.Values.persistentVolumes) }}
       volumes:
         {{- with .Values.volumes }}

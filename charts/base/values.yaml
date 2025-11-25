@@ -167,7 +167,7 @@ serviceAccount:
 # https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 rbac:
   # Specifies whether RBAC resources should be created
-  create: true
+  create: false
   # RBAC Role configuration
   role:
     # Annotations to add to the Role

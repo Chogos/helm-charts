@@ -65,6 +65,8 @@ app:
 # Init containers are specialized containers that run before app containers in a Pod.
 # More information can be found here:
 # https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+# NOTE: Init containers inherit security settings from podSecurityContext (runAsUser, runAsGroup, fsGroup, seccompProfile).
+# Add container-level securityContext for additional hardening (e.g., readOnlyRootFilesystem, capabilities).
 initContainers: []
 # Example:
 # - name: init-myservice
@@ -76,6 +78,12 @@ initContainers: []
 # - name: download-config
 #   image: busybox:1.28
 #   command: ['sh', '-c', 'wget -O /work-dir/config.json http://config-service/config.json']
+#   securityContext:
+#     allowPrivilegeEscalation: false
+#     readOnlyRootFilesystem: true
+#     capabilities:
+#       drop:
+#       - ALL
 #   volumeMounts:
 #   - name: workdir
 #     mountPath: /work-dir
@@ -83,10 +91,18 @@ initContainers: []
 # Sidecar containers run alongside the main application container in the same Pod.
 # More information can be found here:
 # https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/
+# NOTE: Sidecars inherit security settings from podSecurityContext (runAsUser, runAsGroup, fsGroup, seccompProfile).
+# Add container-level securityContext for additional hardening (e.g., readOnlyRootFilesystem, capabilities).
 sidecars: []
 # Example:
 # - name: log-shipper
 #   image: fluent/fluent-bit:2.0
+#   securityContext:
+#     allowPrivilegeEscalation: false
+#     readOnlyRootFilesystem: true
+#     capabilities:
+#       drop:
+#       - ALL
 #   env:
 #   - name: FLUENT_ELASTICSEARCH_HOST
 #     value: "elasticsearch"
@@ -104,6 +120,12 @@ sidecars: []
 #       cpu: "50m"
 # - name: metrics-exporter
 #   image: prom/statsd-exporter:v0.26.0
+#   securityContext:
+#     allowPrivilegeEscalation: false
+#     readOnlyRootFilesystem: true
+#     capabilities:
+#       drop:
+#       - ALL
 #   ports:
 #   - name: metrics
 #     containerPort: 9102
@@ -222,19 +244,30 @@ podAnnotations: {}
 # https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
 podLabels: {}
 
+# Pod-level security context applies to all containers (main app, init containers, and sidecars).
+# These settings are inherited by all containers unless explicitly overridden at the container level.
+# More information: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 podSecurityContext:
+  runAsNonRoot: true
   runAsUser: 1000
   runAsGroup: 1000
   fsGroup: 1000
+  fsGroupChangePolicy: OnRootMismatch
+  seccompProfile:
+    type: RuntimeDefault
 
+# Container-level security context for the main application container.
+# These settings supplement the pod-level security context with container-specific hardening.
+# Init containers and sidecars should define their own securityContext following this example.
 securityContext:
   allowPrivilegeEscalation: false
-  runAsUser: 1000
-  runAsGroup: 1000
   readOnlyRootFilesystem: true
   capabilities:
     drop:
     - ALL
+    # Add back specific capabilities if needed, e.g.:
+    # add:
+    # - NET_BIND_SERVICE  # Required for binding to ports < 1024
 
 # This is for setting up a service more information can be found here:
 # https://kubernetes.io/docs/concepts/services-networking/service/

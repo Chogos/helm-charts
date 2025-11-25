@@ -100,6 +100,67 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+# This section is for RBAC (Role-Based Access Control) configuration more information can be found here:
+# https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+  # RBAC Role configuration
+  role:
+    # Annotations to add to the Role
+    annotations: {}
+    # Labels to add to the Role (in addition to default labels)
+    labels: {}
+    # Rules for the Role - define API groups, resources, and verbs
+    rules: []
+    # Example:
+    # - apiGroups: [""]
+    #   resources: ["pods"]
+    #   verbs: ["get", "list", "watch"]
+    # - apiGroups: [""]
+    #   resources: ["configmaps"]
+    #   verbs: ["get", "list", "watch", "create", "update", "patch"]
+    # - apiGroups: ["apps"]
+    #   resources: ["deployments"]
+    #   verbs: ["get", "list", "watch"]
+  # RBAC RoleBinding configuration
+  roleBinding:
+    # Annotations to add to the RoleBinding
+    annotations: {}
+    # Labels to add to the RoleBinding (in addition to default labels)
+    labels: {}
+  # RBAC ClusterRole configuration
+  clusterRole:
+    # Specifies whether a ClusterRole should be created
+    enabled: false
+    # Annotations to add to the ClusterRole
+    annotations: {}
+    # Labels to add to the ClusterRole (in addition to default labels)
+    labels: {}
+    # Rules for the ClusterRole - define API groups, resources, and verbs
+    rules: []
+    # Example:
+    # - apiGroups: [""]
+    #   resources: ["nodes"]
+    #   verbs: ["get", "list", "watch"]
+    # - apiGroups: [""]
+    #   resources: ["namespaces"]
+    #   verbs: ["get", "list", "watch"]
+    # - apiGroups: ["apps"]
+    #   resources: ["deployments"]
+    #   verbs: ["get", "list", "watch"]
+    # - apiGroups: ["rbac.authorization.k8s.io"]
+    #   resources: ["clusterroles", "clusterrolebindings"]
+    #   verbs: ["get", "list", "watch"]
+  # RBAC ClusterRoleBinding configuration
+  clusterRoleBinding:
+    # Specifies whether a ClusterRoleBinding should be created (only if clusterRole.enabled is true)
+    enabled: false
+    # Annotations to add to the ClusterRoleBinding
+    annotations: {}
+    # Labels to add to the ClusterRoleBinding (in addition to default labels)
+    labels: {}
+
 # This is for setting Kubernetes Annotations to a Pod.
 # For more information checkout:
 # https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/

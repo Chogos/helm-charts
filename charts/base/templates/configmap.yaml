@@ -1,4 +1,7 @@
 {{- if .Values.configmap.enabled -}}
+{{- if not (or .Values.configmap.data .Values.configmap.binaryData) }}
+  {{- fail "ConfigMap is enabled but neither data nor binaryData is set. Please configure at least one of these values." }}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -12,7 +15,6 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-{{- if or .Values.configmap.data .Values.configmap.binaryData }}
 data:
   {{- with .Values.configmap.data }}
   {{- toYaml . | nindent 2 }}
@@ -20,6 +22,5 @@ data:
 {{- if .Values.configmap.binaryData }}
 binaryData:
   {{- toYaml .Values.configmap.binaryData | nindent 2 }}
-{{- end }}
 {{- end }}
 {{- end }}

@@ -61,6 +61,12 @@ app:
   # - prefix: APP_
   #   secretRef:
   #     name: app-secret
+  # Override the default container command. If not set, uses the image's ENTRYPOINT.
+  # More information: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+  command: []
+  # Override the default container arguments. If not set, uses the image's CMD.
+  # More information: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+  args: []
 
 # Init containers are specialized containers that run before app containers in a Pod.
 # More information can be found here:

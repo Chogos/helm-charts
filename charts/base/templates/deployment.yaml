@@ -20,9 +20,13 @@ spec:
       {{- include "base.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
+      {{- $podAnnotations := .Values.podAnnotations | default dict }}
+      {{- if .Values.configmap.enabled }}
+      {{- $podAnnotations = set $podAnnotations "checksum/config" (include (print $.Template.BasePath "/configmap.yaml") . | sha256sum) }}
+      {{- end }}
+      {{- if $podAnnotations }}
       annotations:
-        {{- toYaml . | nindent 8 }}
+        {{- toYaml $podAnnotations | nindent 8 }}
       {{- end }}
       labels:
         {{- include "base.labels" . | nindent 8 }}

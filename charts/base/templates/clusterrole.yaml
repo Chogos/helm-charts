@@ -1,4 +1,8 @@
 {{- if and .Values.rbac.create .Values.rbac.clusterRole.enabled -}}
+{{- include "base.validateRBAC" . -}}
+{{- if eq (len .Values.rbac.clusterRole.rules) 0 }}
+  {{- fail "rbac.clusterRole.rules cannot be empty when rbac.clusterRole.enabled is true" }}
+{{- end }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:

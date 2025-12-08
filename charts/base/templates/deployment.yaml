@@ -1,3 +1,7 @@
+{{- include "base.validateImageRepository" . -}}
+{{- include "base.validateAppPorts" . -}}
+{{- include "base.validateReplicaCount" . -}}
+{{- include "base.validatePersistentVolumes" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -53,7 +57,7 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          image: "{{ required "app.image.repository is required" .Values.app.image.repository }}:{{ .Values.app.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.app.image.pullPolicy }}
           {{- with .Values.app.command }}
           command:

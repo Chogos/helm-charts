@@ -1,0 +1,17 @@
+apiVersion: v2
+name: keycloak-operator
+description: A Helm chart for deploying the Keycloak Operator on Kubernetes
+type: application
+version: 1.0.0
+appVersion: "26.4.7"
+keywords:
+  - keycloak
+  - operator
+  - identity
+  - authentication
+  - sso
+home: https://www.keycloak.org/
+sources:
+  - https://github.com/keycloak/keycloak
+  - https://github.com/keycloak/keycloak-k8s-resources
+icon: https://github.com/keycloak/keycloak-misc/blob/main/logo/icon.png?raw=true

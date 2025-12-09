@@ -1,0 +1,19 @@
+Thank you for installing {{ .Chart.Name }}!
+
+The Keycloak Operator has been deployed to namespace: {{ .Release.Namespace }}
+
+Your release is named {{ .Release.Name }}.
+
+The operator is now watching for Keycloak resources in: {{ include "keycloak-operator.watchNamespace" . }}
+
+For more information:
+- Documentation: https://www.keycloak.org/operator/basic-deployment
+- GitHub: https://github.com/keycloak/keycloak
+
+{{- if not .Values.rbac.create }}
+WARNING: RBAC resources are not being created. Make sure you have the necessary permissions configured manually.
+{{- end }}
+
+{{- if not .Values.serviceAccount.create }}
+WARNING: ServiceAccount is not being created. Make sure you have a ServiceAccount configured with the necessary permissions.
+{{- end }}

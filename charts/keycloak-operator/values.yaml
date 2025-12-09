@@ -1,0 +1,88 @@
+# image contains the operator image configuration
+image:
+  # image.repository is the container image repository for the Keycloak operator
+  repository: quay.io/keycloak/keycloak-operator
+  # image.tag is the container image tag (defaults to Chart appVersion)
+  tag: ""
+  # image.pullPolicy is the image pull policy
+  pullPolicy: IfNotPresent
+
+# imagePullSecrets is the list of image pull secrets for private registries
+imagePullSecrets: []
+
+# nameOverride is the override for the chart name
+nameOverride: ""
+
+# fullnameOverride is the override for the full chart name
+fullnameOverride: ""
+
+# rbac contains RBAC configuration
+rbac:
+  # rbac.create determines whether to create RBAC resources
+  create: true
+
+# serviceAccount contains service account configuration
+serviceAccount:
+  # serviceAccount.create determines whether to create a ServiceAccount
+  create: true
+  # serviceAccount.name is the name of the ServiceAccount (uses generated name if empty)
+  name: ""
+  # serviceAccount.annotations are additional annotations for the ServiceAccount
+  annotations: {}
+
+# podAnnotations are additional annotations for the operator pod
+podAnnotations: {}
+
+# resources are the resource limits and requests for the operator
+resources:
+  limits:
+    memory: "450Mi"
+    cpu: "700m"
+  requests:
+    memory: "450Mi"
+    cpu: "300m"
+
+# startupProbe configuration for the operator container
+startupProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 10
+  failureThreshold: 3
+  successThreshold: 1
+
+# livenessProbe configuration for the operator container
+livenessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 10
+  failureThreshold: 3
+  successThreshold: 1
+
+# readinessProbe configuration for the operator container
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 10
+  failureThreshold: 3
+  successThreshold: 1
+
+# nodeSelector is the node selector for pod assignment
+nodeSelector: {}
+
+# tolerations are the tolerations for pod assignment
+tolerations: []
+
+# affinity is the affinity configuration for pod assignment
+affinity: {}
+
+# env are additional environment variables for the operator
+env: []
+
+# watchNamespace is the namespace the operator should watch (empty means the namespace where it's installed)
+watchNamespace: ""
+
+# Additional labels to add to all resources
+additionalLabels: {}
+
+# Additional annotations to add to all resources
+additionalAnnotations: {}

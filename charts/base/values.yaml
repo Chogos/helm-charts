@@ -294,11 +294,16 @@ service:
 
 # This section is for setting up a ConfigMap more information can be found here:
 # https://kubernetes.io/docs/concepts/configuration/configmap/
+# When enabled, a ConfigMap volume named 'config' is automatically created and mounted.
 configmap:
   # Specifies whether a ConfigMap should be created
   enabled: false
   # The name of the ConfigMap to use. If not set and enabled is true, a name is generated using the fullname template
   name: ""
+  # Automatically mount the ConfigMap at the specified mountPath. Set to false if you need custom mount configuration via volumeMounts.
+  autoMount: true
+  # The path where the ConfigMap should be mounted in the container
+  mountPath: /etc/config
   # ConfigMap annotations
   annotations: {}
   # ConfigMap labels
@@ -468,9 +473,6 @@ autoscaling:
 
 volumes: []
 # Example:
-# - name: config-volume
-#   configMap:
-#     name: my-config
 # - name: secret-volume
 #   secret:
 #     secretName: my-secret
@@ -503,8 +505,6 @@ volumes: []
 # Additional volumeMounts on the output Deployment definition.
 volumeMounts: []
 # Example:
-# - name: config-volume
-#   mountPath: /etc/config
 # - name: secret-volume
 #   mountPath: /etc/secrets
 #   readOnly: true

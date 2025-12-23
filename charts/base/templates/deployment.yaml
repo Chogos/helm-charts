@@ -97,8 +97,12 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if or (.Values.volumeMounts) (.Values.persistentVolumes) }}
+          {{- if or (.Values.volumeMounts) (.Values.persistentVolumes) (and .Values.configmap.enabled .Values.configmap.autoMount) }}
           volumeMounts:
+            {{- if and .Values.configmap.enabled .Values.configmap.autoMount }}
+            - name: config
+              mountPath: {{ .Values.configmap.mountPath }}
+            {{- end }}
             {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -110,8 +114,13 @@ spec:
         {{- with .Values.sidecars }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- if or (.Values.volumes) (.Values.persistentVolumes) }}
+      {{- if or (.Values.volumes) (.Values.persistentVolumes) (.Values.configmap.enabled) }}
       volumes:
+        {{- if .Values.configmap.enabled }}
+        - name: config
+          configMap:
+            name: {{ .Values.configmap.name | default (include "base.fullname" .) }}
+        {{- end }}
         {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

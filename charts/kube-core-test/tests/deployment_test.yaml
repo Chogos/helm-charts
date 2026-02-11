@@ -1,0 +1,682 @@
+suite: Deployment template tests
+templates:
+  - templates/alpha.yaml
+values:
+  - ../ci/minimal-values.yaml
+release:
+  name: test-release
+  namespace: test-ns
+chart:
+  version: 0.1.0
+  appVersion: 1.0.0
+tests:
+  - it: should render a Deployment with minimal values
+    asserts:
+      - containsDocument:
+          kind: Deployment
+          apiVersion: apps/v1
+          any: true
+      - equal:
+          path: metadata.name
+          value: test-release-alpha
+
+  - it: should set correct replica count
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should not set replicas when autoscaling enabled
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.minReplicas: 2
+      alpha.autoscaling.maxReplicas: 5
+      alpha.autoscaling.targetCPUUtilizationPercentage: 80
+    asserts:
+      - isNull:
+          path: spec.replicas
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should set image correctly
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "nginx:1.25.0"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should fall back to appVersion when tag not set
+    set:
+      alpha.app.image.tag: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "nginx:1.0.0"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should set imagePullPolicy
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render container ports
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0]
+          value:
+            name: http
+            containerPort: 8080
+            protocol: TCP
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should set pod security context
+    asserts:
+      - isSubset:
+          path: spec.template.spec.securityContext
+          content:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should set container security context
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0].securityContext
+          content:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should disable service links
+    asserts:
+      - equal:
+          path: spec.template.spec.enableServiceLinks
+          value: false
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should set service account name
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: test-release-alpha
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should name main container "main"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: "main"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should include standard labels
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: alpha
+            app.kubernetes.io/instance: test-release
+            app.kubernetes.io/managed-by: Helm
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should include selector labels matching pod labels
+    asserts:
+      - isSubset:
+          path: spec.selector.matchLabels
+          content:
+            app.kubernetes.io/name: alpha
+            app.kubernetes.io/instance: test-release
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render custom deployment annotations
+    set:
+      alpha.deploymentAnnotations:
+        custom/annotation: "true"
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            custom/annotation: "true"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render custom deployment labels
+    set:
+      alpha.deploymentLabels:
+        custom/label: "true"
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            custom/label: "true"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render custom pod annotations
+    set:
+      alpha.podAnnotations:
+        pod.custom/note: "debug"
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.annotations
+          content:
+            pod.custom/note: "debug"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render custom pod labels
+    set:
+      alpha.podLabels:
+        pod.custom/label: "alpha"
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            pod.custom/label: "alpha"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render env variables
+    set:
+      alpha.app.env:
+        - name: FOO
+          value: bar
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FOO
+            value: bar
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render envFrom
+    set:
+      alpha.app.envFrom:
+        - configMapRef:
+            name: my-config
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: my-config
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render command override
+    set:
+      alpha.app.command:
+        - /bin/sh
+        - -c
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value:
+            - /bin/sh
+            - -c
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render args override
+    set:
+      alpha.app.args:
+        - --port
+        - "8080"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - --port
+            - "8080"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render init containers
+    set:
+      alpha.initContainers:
+        - name: init-db
+          image: busybox:1.36
+          command: ["sh", "-c", "echo init"]
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: init-db
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render sidecars
+    set:
+      alpha.sidecars:
+        - name: log-shipper
+          image: fluent/fluent-bit:2.0
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: log-shipper
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render image pull secrets
+    set:
+      alpha.imagePullSecrets:
+        - name: regcred
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: regcred
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render liveness probe
+    set:
+      alpha.livenessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /healthz
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render readiness probe
+    set:
+      alpha.readinessProbe:
+        httpGet:
+          path: /readyz
+          port: http
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /readyz
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render startup probe
+    set:
+      alpha.startupProbe:
+        httpGet:
+          path: /healthz
+          port: http
+        failureThreshold: 30
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.failureThreshold
+          value: 30
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render resources
+    set:
+      alpha.resources:
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+          value: "500m"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render volume mounts
+    set:
+      alpha.volumes:
+        - name: cache
+          emptyDir: {}
+      alpha.volumeMounts:
+        - name: cache
+          mountPath: /tmp/cache
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: cache
+            mountPath: /tmp/cache
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render node selector
+    set:
+      alpha.nodeSelector:
+        kubernetes.io/os: linux
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            kubernetes.io/os: linux
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render tolerations
+    set:
+      alpha.tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "alpha"
+          effect: "NoSchedule"
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: "dedicated"
+            operator: "Equal"
+            value: "alpha"
+            effect: "NoSchedule"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render affinity rules
+    set:
+      alpha.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+    asserts:
+      - isNotNull:
+          path: spec.template.spec.affinity.nodeAffinity
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render topology spread constraints
+    set:
+      alpha.topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: alpha
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should not render configmap checksum when configmap disabled
+    asserts:
+      - isNull:
+          path: spec.template.metadata.annotations.checksum/config
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render configmap checksum when configmap enabled with data
+    set:
+      alpha.configmap.enabled: true
+      alpha.configmap.data:
+        app.conf: "key=value"
+    asserts:
+      - isNotNull:
+          path: spec.template.metadata.annotations.checksum/config
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render configmap volume mount when auto-mount enabled
+    set:
+      alpha.configmap.enabled: true
+      alpha.configmap.data:
+        app.conf: "key=value"
+      alpha.configmap.mount.enabled: true
+      alpha.configmap.mount.mountPath: "/etc/config"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: test-release-alpha-config
+            mountPath: /etc/config
+            readOnly: true
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should not render anything when enabled is false
+    set:
+      alpha.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should auto-wire PVC volumes and volumeMounts
+    set:
+      alpha.persistentVolumes:
+        - name: data
+          mountPath: /data
+          storageClassName: gp3
+          accessModes:
+            - ReadWriteOnce
+          storage: "10Gi"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: data
+            mountPath: /data
+        documentSelector:
+          path: kind
+          value: Deployment
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            persistentVolumeClaim:
+              claimName: test-release-alpha-data
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render configmap mount with subPath
+    set:
+      alpha.configmap.enabled: true
+      alpha.configmap.data:
+        app.conf: "key=value"
+      alpha.configmap.mount.enabled: true
+      alpha.configmap.mount.mountPath: "/etc/config"
+      alpha.configmap.mount.subPath: "app.conf"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: test-release-alpha-config
+            mountPath: /etc/config
+            readOnly: true
+            subPath: app.conf
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render configmap volume with items
+    set:
+      alpha.configmap.enabled: true
+      alpha.configmap.data:
+        app.conf: "key=value"
+      alpha.configmap.mount.enabled: true
+      alpha.configmap.mount.mountPath: "/etc/config"
+      alpha.configmap.mount.items:
+        - key: app.conf
+          path: app.conf
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: test-release-alpha-config
+            configMap:
+              name: test-release-alpha
+              items:
+                - key: app.conf
+                  path: app.conf
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render multiple container ports
+    set:
+      alpha.app.ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].ports
+          count: 2
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should fail when image repository not set
+    set:
+      alpha.app.image.repository: null
+    asserts:
+      - failedTemplate:
+          errorMessage: "app.image.repository is required"
+
+  - it: should render configmap volume with auto-resolved name
+    set:
+      alpha.configmap.enabled: true
+      alpha.configmap.data:
+        app.conf: "key=value"
+      alpha.configmap.mount.enabled: false
+      alpha.volumes:
+        - name: app-config
+          configMap:
+            name: ""
+      alpha.volumeMounts:
+        - name: app-config
+          mountPath: /opt/config
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: app-config
+            configMap:
+              name: test-release-alpha
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render configmap volume auto-resolve with defaultMode and optional
+    set:
+      alpha.configmap.enabled: true
+      alpha.configmap.data:
+        app.conf: "key=value"
+      alpha.configmap.mount.enabled: false
+      alpha.volumes:
+        - name: app-config
+          configMap:
+            name: ""
+            defaultMode: 420
+            optional: true
+      alpha.volumeMounts:
+        - name: app-config
+          mountPath: /opt/config
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: app-config
+            configMap:
+              name: test-release-alpha
+              defaultMode: 420
+              optional: true
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render configmap volume auto-resolve with items
+    set:
+      alpha.configmap.enabled: true
+      alpha.configmap.data:
+        app.conf: "key=value"
+        other.conf: "other=value"
+      alpha.configmap.mount.enabled: false
+      alpha.volumes:
+        - name: app-config
+          configMap:
+            name: ""
+            items:
+              - key: app.conf
+                path: application.conf
+      alpha.volumeMounts:
+        - name: app-config
+          mountPath: /opt/config
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: app-config
+            configMap:
+              name: test-release-alpha
+              items:
+                - key: app.conf
+                  path: application.conf
+        documentSelector:
+          path: kind
+          value: Deployment

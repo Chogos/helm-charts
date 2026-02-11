@@ -1,0 +1,140 @@
+suite: PodDisruptionBudget template tests
+templates:
+  - templates/alpha.yaml
+values:
+  - ../ci/minimal-values.yaml
+release:
+  name: test-release
+  namespace: test-ns
+chart:
+  version: 0.1.0
+  appVersion: 1.0.0
+tests:
+  - it: should not render PDB when disabled
+    asserts:
+      - not: true
+        containsDocument:
+          kind: PodDisruptionBudget
+          apiVersion: policy/v1
+          any: true
+
+  - it: should render PDB with minAvailable
+    set:
+      alpha.podDisruptionBudget.enabled: true
+      alpha.podDisruptionBudget.minAvailable: 1
+      alpha.podDisruptionBudget.maxUnavailable: null
+    asserts:
+      - containsDocument:
+          kind: PodDisruptionBudget
+          apiVersion: policy/v1
+          any: true
+      - equal:
+          path: spec.minAvailable
+          value: 1
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should render PDB with maxUnavailable
+    set:
+      alpha.podDisruptionBudget.enabled: true
+      alpha.podDisruptionBudget.minAvailable: null
+      alpha.podDisruptionBudget.maxUnavailable: 1
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+      - isNull:
+          path: spec.minAvailable
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should use correct selector labels
+    set:
+      alpha.podDisruptionBudget.enabled: true
+    asserts:
+      - isSubset:
+          path: spec.selector.matchLabels
+          content:
+            app.kubernetes.io/name: alpha
+            app.kubernetes.io/instance: test-release
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should render PDB annotations
+    set:
+      alpha.podDisruptionBudget.enabled: true
+      alpha.podDisruptionBudget.annotations:
+        custom: "true"
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            custom: "true"
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should render PDB labels
+    set:
+      alpha.podDisruptionBudget.enabled: true
+      alpha.podDisruptionBudget.labels:
+        custom: "true"
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            custom: "true"
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should fail when both minAvailable and maxUnavailable set
+    set:
+      alpha.podDisruptionBudget.enabled: true
+      alpha.podDisruptionBudget.minAvailable: 1
+      alpha.podDisruptionBudget.maxUnavailable: 1
+    asserts:
+      - failedTemplate:
+          errorMessage: "PodDisruptionBudget cannot have both minAvailable and maxUnavailable"
+
+  - it: should fail when neither minAvailable nor maxUnavailable set
+    set:
+      alpha.podDisruptionBudget.enabled: true
+      alpha.podDisruptionBudget.minAvailable: null
+      alpha.podDisruptionBudget.maxUnavailable: null
+    asserts:
+      - failedTemplate:
+          errorMessage: "PodDisruptionBudget requires minAvailable or maxUnavailable"
+
+  - it: should accept percentage value for minAvailable
+    set:
+      alpha.podDisruptionBudget.enabled: true
+      alpha.podDisruptionBudget.minAvailable: "50%"
+      alpha.podDisruptionBudget.maxUnavailable: null
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: "50%"
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should include standard labels
+    set:
+      alpha.podDisruptionBudget.enabled: true
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: alpha
+            app.kubernetes.io/instance: test-release
+            app.kubernetes.io/managed-by: Helm
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget

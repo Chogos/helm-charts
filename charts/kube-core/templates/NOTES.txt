@@ -1,0 +1,98 @@
+================================================================================
+kube-core - Kubernetes Library Chart
+================================================================================
+
+This is a Helm library chart. It does not deploy resources directly.
+
+Instead, it provides reusable templates that downstream charts can invoke
+to create Kubernetes resources for any number of services.
+
+## Usage
+
+1. Add this chart as a dependency in your Chart.yaml:
+
+   dependencies:
+     - name: kube-core
+       version: 0.1.0
+       repository: "file://../kube-core"
+
+2. Run `helm dependency update` to fetch the library.
+
+3. In your templates, invoke the library templates:
+
+   {{`{{- $svcCtx := dict "context" $ "service" .Values.myService "name" "myservice" -}}`}}
+   {{`{{ include "common.deployment" $svcCtx }}`}}
+   ---
+   {{`{{ include "common.service" $svcCtx }}`}}
+
+4. Or use the convenience template to render all resources for a service:
+
+   {{`{{ include "common.all" (dict "context" $ "service" .Values.myService "name" "myservice") }}`}}
+
+## Available Templates
+
+Resource templates (each accepts a service context dict):
+- common.deployment      - Creates a Deployment
+- common.service         - Creates a Service
+- common.serviceaccount  - Creates a ServiceAccount
+- common.configmap       - Creates a ConfigMap
+- common.ingress         - Creates an Ingress
+- common.httproute       - Creates an HTTPRoute (Gateway API)
+- common.hpa             - Creates a HorizontalPodAutoscaler
+- common.pdb             - Creates a PodDisruptionBudget
+- common.pvc             - Creates PersistentVolumeClaims
+- common.role            - Creates a Role
+- common.rolebinding     - Creates a RoleBinding
+- common.clusterrole     - Creates a ClusterRole
+- common.clusterrolebinding - Creates a ClusterRoleBinding
+- common.servicemonitor  - Creates a ServiceMonitor (Prometheus)
+- common.prometheusrule  - Creates PrometheusRule resources
+- common.all             - Creates all enabled resources for a service
+
+Helper templates:
+- common.serviceName     - Returns the service name
+- common.fullname        - Returns the fully qualified name
+- common.labels          - Returns common labels
+- common.selectorLabels  - Returns selector labels
+- common.serviceAccountName - Returns the service account name
+- common.hostname        - Generates hostname from pattern
+
+## Example Values Structure
+
+Define each service under a key in your values.yaml:
+
+   web:
+     enabled: true
+     nameOverride: "web"
+     app:
+       image:
+         repository: myapp/web
+         tag: "1.0.0"
+       ports:
+         - name: http
+           containerPort: 8080
+           protocol: TCP
+     service:
+       enabled: true
+       type: ClusterIP
+       ports:
+         - name: http
+           port: 80
+           targetPort: http
+           protocol: TCP
+
+   worker:
+     enabled: true
+     nameOverride: "worker"
+     app:
+       image:
+         repository: myapp/worker
+         tag: "1.0.0"
+       ports:
+         - name: http
+           containerPort: 8080
+           protocol: TCP
+     service:
+       enabled: false
+
+For full configuration options, see values.yaml in this chart.

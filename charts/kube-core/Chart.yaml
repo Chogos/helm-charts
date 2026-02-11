@@ -1,0 +1,21 @@
+apiVersion: v2
+name: kube-core
+description: Helm library chart providing reusable templates for Kubernetes resources
+type: library
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">= 1.26.0"
+keywords:
+  - library
+  - kubernetes
+  - deployment
+  - service
+  - ingress
+  - gateway-api
+  - security
+  - monitoring
+maintainers:
+  - name: Chogos
+home: https://github.com/Chogos/helm-charts
+sources:
+  - https://github.com/Chogos/helm-charts

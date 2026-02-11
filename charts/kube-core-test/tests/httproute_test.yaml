@@ -1,0 +1,323 @@
+suite: HTTPRoute template tests
+templates:
+  - templates/alpha.yaml
+values:
+  - ../ci/minimal-values.yaml
+release:
+  name: test-release
+  namespace: test-ns
+chart:
+  version: 0.1.0
+  appVersion: 1.0.0
+tests:
+  - it: should not render HTTPRoute when disabled
+    asserts:
+      - not: true
+        containsDocument:
+          kind: HTTPRoute
+          apiVersion: gateway.networking.k8s.io/v1
+          any: true
+
+  - it: should render HTTPRoute with parentRefs and rules
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.hostnames:
+        - alpha
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+          sectionName: http
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - containsDocument:
+          kind: HTTPRoute
+          apiVersion: gateway.networking.k8s.io/v1
+          any: true
+      - equal:
+          path: metadata.name
+          value: test-release-alpha
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+
+  - it: should render parentRefs correctly
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+          sectionName: http
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - contains:
+          path: spec.parentRefs
+          content:
+            name: gateway
+            sectionName: http
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+
+  - it: should render hostnames with DNS generation
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.hostnames:
+        - api
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - contains:
+          path: spec.hostnames
+          content: "api.dev.example.com"
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+
+  - it: should render backendRefs with default port from service
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - equal:
+          path: spec.rules[0].backendRefs[0].port
+          value: 80
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+
+  - it: should render backendRefs with custom port
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+          port: 8080
+    asserts:
+      - equal:
+          path: spec.rules[0].backendRefs[0].port
+          value: 8080
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+
+  - it: should include standard labels
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: alpha
+            app.kubernetes.io/instance: test-release
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+
+  - it: should render annotations
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.annotations:
+        gateway.networking.k8s.io/route-timeout: "30s"
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            gateway.networking.k8s.io/route-timeout: "30s"
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+
+  - it: should render filters
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+          filters:
+            - type: RequestHeaderModifier
+              requestHeaderModifier:
+                add:
+                  - name: X-Custom
+                    value: "true"
+    asserts:
+      - isNotNull:
+          path: spec.rules[0].filters
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+
+  - it: should render custom weight
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+          weight: 80
+    asserts:
+      - equal:
+          path: spec.rules[0].backendRefs[0].weight
+          value: 80
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+
+  - it: should fail when parentRefs not set
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.parentRefs: null
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - failedTemplate:
+          errorMessage: "httpRoute.parentRefs is required"
+
+  - it: should fail when rules not set
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+      alpha.httpRoute.rules: null
+    asserts:
+      - failedTemplate:
+          errorMessage: "httpRoute.rules is required"
+
+  - it: should render prod hostname without environment subdomain
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "prod"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.hostnames:
+        - api
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - contains:
+          path: spec.hostnames
+          content: "api.example.com"
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+
+  - it: should render multiple rules
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /api
+          port: 8080
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /health
+          port: 8081
+    asserts:
+      - lengthEqual:
+          path: spec.rules
+          count: 2
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+      - equal:
+          path: spec.rules[1].backendRefs[0].port
+          value: 8081
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+
+  - it: should render multiple hostnames
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.httpRoute.enabled: true
+      alpha.httpRoute.hostnames:
+        - api
+        - web
+      alpha.httpRoute.parentRefs:
+        - name: gateway
+      alpha.httpRoute.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - lengthEqual:
+          path: spec.hostnames
+          count: 2
+        documentSelector:
+          path: kind
+          value: HTTPRoute
+      - contains:
+          path: spec.hostnames
+          content: "web.dev.example.com"
+        documentSelector:
+          path: kind
+          value: HTTPRoute

@@ -1,0 +1,326 @@
+suite: RBAC template tests
+templates:
+  - templates/alpha.yaml
+values:
+  - ../ci/minimal-values.yaml
+release:
+  name: test-release
+  namespace: test-ns
+chart:
+  version: 0.1.0
+  appVersion: 1.0.0
+tests:
+  - it: should not render RBAC when rbac.create is false
+    asserts:
+      - not: true
+        containsDocument:
+          kind: Role
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true
+      - not: true
+        containsDocument:
+          kind: RoleBinding
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true
+      - not: true
+        containsDocument:
+          kind: ClusterRole
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true
+      - not: true
+        containsDocument:
+          kind: ClusterRoleBinding
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true
+
+  - it: should render Role and RoleBinding
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.role.rules:
+        - apiGroups: [""]
+          resources: ["pods"]
+          verbs: ["get", "list", "watch"]
+      alpha.rbac.clusterRole.enabled: false
+    asserts:
+      - containsDocument:
+          kind: Role
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true
+      - containsDocument:
+          kind: RoleBinding
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true
+
+  - it: should set Role name correctly
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.role.rules:
+        - apiGroups: [""]
+          resources: ["pods"]
+          verbs: ["get"]
+      alpha.rbac.clusterRole.enabled: false
+    asserts:
+      - equal:
+          path: metadata.name
+          value: test-release-alpha
+        documentSelector:
+          path: kind
+          value: Role
+
+  - it: should render Role rules
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.role.rules:
+        - apiGroups: [""]
+          resources: ["pods", "configmaps"]
+          verbs: ["get", "list", "watch"]
+      alpha.rbac.clusterRole.enabled: false
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: ["pods", "configmaps"]
+            verbs: ["get", "list", "watch"]
+        documentSelector:
+          path: kind
+          value: Role
+
+  - it: should reference correct ServiceAccount in RoleBinding
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.role.rules:
+        - apiGroups: [""]
+          resources: ["pods"]
+          verbs: ["get"]
+      alpha.rbac.clusterRole.enabled: false
+    asserts:
+      - contains:
+          path: subjects
+          content:
+            kind: ServiceAccount
+            name: test-release-alpha
+            namespace: test-ns
+        documentSelector:
+          path: kind
+          value: RoleBinding
+      - equal:
+          path: roleRef
+          value:
+            kind: Role
+            name: test-release-alpha
+            apiGroup: rbac.authorization.k8s.io
+        documentSelector:
+          path: kind
+          value: RoleBinding
+
+  - it: should render ClusterRole when enabled
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.clusterRole.enabled: true
+      alpha.rbac.clusterRole.rules:
+        - apiGroups: [""]
+          resources: ["nodes"]
+          verbs: ["get", "list"]
+      alpha.rbac.clusterRoleBinding.enabled: true
+    asserts:
+      - containsDocument:
+          kind: ClusterRole
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true
+      - containsDocument:
+          kind: ClusterRoleBinding
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true
+      - not: true
+        containsDocument:
+          kind: Role
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true
+
+  - it: should render ClusterRoleBinding with correct references
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.clusterRole.enabled: true
+      alpha.rbac.clusterRole.rules:
+        - apiGroups: [""]
+          resources: ["nodes"]
+          verbs: ["get"]
+      alpha.rbac.clusterRoleBinding.enabled: true
+    asserts:
+      - equal:
+          path: roleRef
+          value:
+            kind: ClusterRole
+            name: test-release-alpha
+            apiGroup: rbac.authorization.k8s.io
+        documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+
+  - it: should render Role annotations
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.role.annotations:
+        custom: "annotation"
+      alpha.rbac.role.rules:
+        - apiGroups: [""]
+          resources: ["pods"]
+          verbs: ["get"]
+      alpha.rbac.clusterRole.enabled: false
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            custom: "annotation"
+        documentSelector:
+          path: kind
+          value: Role
+
+  - it: should render Role labels
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.role.labels:
+        custom: "label"
+      alpha.rbac.role.rules:
+        - apiGroups: [""]
+          resources: ["pods"]
+          verbs: ["get"]
+      alpha.rbac.clusterRole.enabled: false
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            custom: "label"
+        documentSelector:
+          path: kind
+          value: Role
+
+  - it: should fail when rbac.create true but no rules
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.role.rules: []
+      alpha.rbac.clusterRole.enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "RBAC rules cannot be empty when rbac.create is true"
+
+  - it: should fail when clusterRole enabled but no rules
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.clusterRole.enabled: true
+      alpha.rbac.clusterRole.rules: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "ClusterRole rules must be provided when rbac.clusterRole.enabled is true"
+
+  - it: should render RoleBinding annotations and labels
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.role.rules:
+        - apiGroups: [""]
+          resources: ["pods"]
+          verbs: ["get"]
+      alpha.rbac.roleBinding.annotations:
+        custom: "rb-annotation"
+      alpha.rbac.roleBinding.labels:
+        custom: "rb-label"
+      alpha.rbac.clusterRole.enabled: false
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            custom: "rb-annotation"
+        documentSelector:
+          path: kind
+          value: RoleBinding
+      - isSubset:
+          path: metadata.labels
+          content:
+            custom: "rb-label"
+        documentSelector:
+          path: kind
+          value: RoleBinding
+
+  - it: should render ClusterRole annotations and labels
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.clusterRole.enabled: true
+      alpha.rbac.clusterRole.annotations:
+        custom: "cr-annotation"
+      alpha.rbac.clusterRole.labels:
+        custom: "cr-label"
+      alpha.rbac.clusterRole.rules:
+        - apiGroups: [""]
+          resources: ["nodes"]
+          verbs: ["get"]
+      alpha.rbac.clusterRoleBinding.enabled: false
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            custom: "cr-annotation"
+        documentSelector:
+          path: kind
+          value: ClusterRole
+      - isSubset:
+          path: metadata.labels
+          content:
+            custom: "cr-label"
+        documentSelector:
+          path: kind
+          value: ClusterRole
+
+  - it: should render ClusterRoleBinding annotations and labels
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.clusterRole.enabled: true
+      alpha.rbac.clusterRole.rules:
+        - apiGroups: [""]
+          resources: ["nodes"]
+          verbs: ["get"]
+      alpha.rbac.clusterRoleBinding.enabled: true
+      alpha.rbac.clusterRoleBinding.annotations:
+        custom: "crb-annotation"
+      alpha.rbac.clusterRoleBinding.labels:
+        custom: "crb-label"
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            custom: "crb-annotation"
+        documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+      - isSubset:
+          path: metadata.labels
+          content:
+            custom: "crb-label"
+        documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+
+  - it: should render ClusterRole without ClusterRoleBinding
+    set:
+      alpha.rbac.create: true
+      alpha.rbac.clusterRole.enabled: true
+      alpha.rbac.clusterRole.rules:
+        - apiGroups: [""]
+          resources: ["nodes"]
+          verbs: ["get"]
+      alpha.rbac.clusterRoleBinding.enabled: false
+    asserts:
+      - containsDocument:
+          kind: ClusterRole
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true
+      - not: true
+        containsDocument:
+          kind: ClusterRoleBinding
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true
+      - not: true
+        containsDocument:
+          kind: Role
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true

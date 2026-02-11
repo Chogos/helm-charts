@@ -1,0 +1,251 @@
+suite: HorizontalPodAutoscaler template tests
+templates:
+  - templates/alpha.yaml
+values:
+  - ../ci/minimal-values.yaml
+release:
+  name: test-release
+  namespace: test-ns
+chart:
+  version: 0.1.0
+  appVersion: 1.0.0
+tests:
+  - it: should not render HPA when disabled
+    asserts:
+      - not: true
+        containsDocument:
+          kind: HorizontalPodAutoscaler
+          apiVersion: autoscaling/v2
+          any: true
+
+  - it: should render HPA with CPU target
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.minReplicas: 2
+      alpha.autoscaling.maxReplicas: 10
+      alpha.autoscaling.targetCPUUtilizationPercentage: 80
+      alpha.autoscaling.targetMemoryUtilizationPercentage: null
+    asserts:
+      - containsDocument:
+          kind: HorizontalPodAutoscaler
+          apiVersion: autoscaling/v2
+          any: true
+      - equal:
+          path: spec.minReplicas
+          value: 2
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+      - equal:
+          path: spec.maxReplicas
+          value: 10
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should target the correct deployment
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.targetCPUUtilizationPercentage: 80
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef
+          value:
+            apiVersion: apps/v1
+            kind: Deployment
+            name: test-release-alpha
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should render CPU metric
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.targetCPUUtilizationPercentage: 75
+      alpha.autoscaling.targetMemoryUtilizationPercentage: null
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: cpu
+              target:
+                type: Utilization
+                averageUtilization: 75
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should render memory metric
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.targetCPUUtilizationPercentage: null
+      alpha.autoscaling.targetMemoryUtilizationPercentage: 80
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: memory
+              target:
+                type: Utilization
+                averageUtilization: 80
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should render both CPU and memory metrics
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.targetCPUUtilizationPercentage: 75
+      alpha.autoscaling.targetMemoryUtilizationPercentage: 80
+    asserts:
+      - lengthEqual:
+          path: spec.metrics
+          count: 2
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should render scaleDown behavior
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.targetCPUUtilizationPercentage: 80
+      alpha.autoscaling.behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Percent
+              value: 50
+              periodSeconds: 60
+          selectPolicy: Max
+    asserts:
+      - equal:
+          path: spec.behavior.scaleDown.stabilizationWindowSeconds
+          value: 300
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should render scaleUp behavior
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.targetCPUUtilizationPercentage: 80
+      alpha.autoscaling.behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 30
+          selectPolicy: Max
+    asserts:
+      - equal:
+          path: spec.behavior.scaleUp.selectPolicy
+          value: Max
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should fail when no metrics defined
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.targetCPUUtilizationPercentage: null
+      alpha.autoscaling.targetMemoryUtilizationPercentage: null
+      alpha.autoscaling.customMetrics: []
+      alpha.autoscaling.containerMetrics: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "autoscaling.enabled is true but no metrics are defined"
+
+  - it: should render custom metrics
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.targetCPUUtilizationPercentage: null
+      alpha.autoscaling.targetMemoryUtilizationPercentage: null
+      alpha.autoscaling.customMetrics:
+        - type: Pods
+          pods:
+            metric:
+              name: http_requests_per_second
+            target:
+              type: AverageValue
+              averageValue: "1k"
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: Pods
+            pods:
+              metric:
+                name: http_requests_per_second
+              target:
+                type: AverageValue
+                averageValue: "1k"
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should render container metrics
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.targetCPUUtilizationPercentage: null
+      alpha.autoscaling.targetMemoryUtilizationPercentage: null
+      alpha.autoscaling.containerMetrics:
+        - type: ContainerResource
+          containerResource:
+            name: cpu
+            container: main
+            target:
+              type: Utilization
+              averageUtilization: 60
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: ContainerResource
+            containerResource:
+              name: cpu
+              container: main
+              target:
+                type: Utilization
+                averageUtilization: 60
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should fail when minReplicas is zero
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.minReplicas: 0
+      alpha.autoscaling.maxReplicas: 5
+      alpha.autoscaling.targetCPUUtilizationPercentage: 80
+    asserts:
+      - failedTemplate:
+          errorMessage: "autoscaling.minReplicas must be positive (got: 0)"
+
+  - it: should fail when maxReplicas less than minReplicas
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.minReplicas: 5
+      alpha.autoscaling.maxReplicas: 3
+      alpha.autoscaling.targetCPUUtilizationPercentage: 80
+    asserts:
+      - failedTemplate:
+          errorMessage: "autoscaling.maxReplicas (3) must be >= minReplicas (5)"
+
+  - it: should include standard labels
+    set:
+      alpha.autoscaling.enabled: true
+      alpha.autoscaling.targetCPUUtilizationPercentage: 80
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: alpha
+            app.kubernetes.io/instance: test-release
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler

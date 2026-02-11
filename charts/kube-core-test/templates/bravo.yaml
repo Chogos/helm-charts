@@ -1,0 +1,4 @@
+{{- if .Values.bravo }}
+{{- $svcCtx := dict "context" $ "service" .Values.bravo "name" "bravo" -}}
+{{ include "common.all" $svcCtx }}
+{{- end }}

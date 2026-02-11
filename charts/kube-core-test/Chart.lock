@@ -1,0 +1,6 @@
+dependencies:
+- name: kube-core
+  repository: file://../kube-core
+  version: 0.1.0
+digest: sha256:b2f189efd2468fcffb0d34b8419c179989a6c928fef8554427c2a2a23043aed3
+generated: "2026-02-10T11:37:56.813059+01:00"

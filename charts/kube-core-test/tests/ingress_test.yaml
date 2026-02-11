@@ -1,0 +1,345 @@
+suite: Ingress template tests
+templates:
+  - templates/alpha.yaml
+values:
+  - ../ci/minimal-values.yaml
+release:
+  name: test-release
+  namespace: test-ns
+chart:
+  version: 0.1.0
+  appVersion: 1.0.0
+tests:
+  - it: should not render Ingress when disabled
+    asserts:
+      - not: true
+        containsDocument:
+          kind: Ingress
+          apiVersion: networking.k8s.io/v1
+          any: true
+
+  - it: should render Ingress with host
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.ingress.enabled: true
+      alpha.ingress.className: nginx
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - containsDocument:
+          kind: Ingress
+          apiVersion: networking.k8s.io/v1
+          any: true
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should generate hostname with DNS pattern
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: "alpha.dev.example.com"
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should generate prod hostname without environment subdomain
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "prod"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: "alpha.example.com"
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should generate hostname with subenvironment
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.subenvironment: "dev-a"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: "alpha-dev-a.dev.example.com"
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should generate hostname with tenantId
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.tenantId: "acme"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: "alpha-acme.dev.example.com"
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should generate hostname with subenvironment and tenantId
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.subenvironment: "dev-a"
+      alpha.tenantId: "acme"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: "alpha-acme-dev-a.dev.example.com"
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should render TLS configuration
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+      alpha.ingress.tls:
+        - secretName: alpha-tls
+          hosts:
+            - alpha
+    asserts:
+      - equal:
+          path: spec.tls[0].secretName
+          value: alpha-tls
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should render annotations
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.ingress.enabled: true
+      alpha.ingress.annotations:
+        cert-manager.io/cluster-issuer: letsencrypt
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            cert-manager.io/cluster-issuer: letsencrypt
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should fail when enabled but no hosts
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "Ingress is enabled but no hosts are configured"
+
+  - it: should fail when dnsZone not set
+    set:
+      alpha.dnsZone: ""
+      alpha.environment: ""
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - failedTemplate:
+          errorMessage: "dnsZone is required but not set (set at service, root, or global.dnsZone level)"
+
+  - it: should wire backend service name to fullname
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: test-release-alpha
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should auto-wire backend port from service.ports[0]
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 80
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should render multiple paths per host
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /api
+              pathType: Prefix
+            - path: /health
+              pathType: Exact
+    asserts:
+      - lengthEqual:
+          path: spec.rules[0].http.paths
+          count: 2
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should render multiple hosts
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+        - host: api
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: "alpha.dev.example.com"
+        documentSelector:
+          path: kind
+          value: Ingress
+      - equal:
+          path: spec.rules[1].host
+          value: "api.dev.example.com"
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should resolve TLS hostnames through DNS generation
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+      alpha.ingress.tls:
+        - secretName: alpha-tls
+          hosts:
+            - alpha
+    asserts:
+      - equal:
+          path: spec.tls[0].hosts[0]
+          value: "alpha.dev.example.com"
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should not render ingressClassName when className is empty
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.ingress.enabled: true
+      alpha.ingress.className: ""
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - notExists:
+          path: spec.ingressClassName
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should render custom path port override
+    set:
+      alpha.dnsZone: "example.com"
+      alpha.environment: "dev"
+      alpha.ingress.enabled: true
+      alpha.ingress.hosts:
+        - host: alpha
+          paths:
+            - path: /
+              pathType: Prefix
+              port: 8080
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 8080
+        documentSelector:
+          path: kind
+          value: Ingress

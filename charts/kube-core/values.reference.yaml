@@ -1,0 +1,821 @@
+# ==============================================================================
+# kube-core Library Chart - Values Reference
+# ==============================================================================
+#
+# This file documents all available configuration options for services using
+# the kube-core library chart. Copy relevant sections to your downstream chart's
+# values.yaml and customize as needed.
+#
+# NOTE: This file is NOT used by Helm. Library charts inherit values from
+# their parent charts. This file exists purely as documentation.
+#
+# For IDE validation and autocomplete, see: values.schema.json
+#
+# Usage in downstream chart values.yaml:
+#
+#   web:                    # Service name (becomes part of resource names)
+#     enabled: true
+#     app:
+#       image:
+#         repository: myapp/web
+#         tag: "1.0.0"
+#     # ... other configuration from this reference
+#
+#   worker:
+#     enabled: true
+#     app:
+#       image:
+#         repository: myapp/worker
+#     # ... other configuration
+#
+# ==============================================================================
+
+# enable indicates whether to deploy this chart
+enabled: true
+
+# environment is the deployment environment (e.g., dev, qa, sqa, nga, prod)
+environment: ""
+
+# subenvironment is the sub-environment within the environment (e.g., dev-a, dev-b)
+subenvironment: ""
+
+# tenantId is the tenant identifier for single-tenant deployments, used in hostname generation
+tenantId: ""
+
+# DNS zone for constructing hostnames
+dnsZone: ""
+
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
+# This will set the replicaset count more information can be found here:
+# https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+replicaCount: 1
+
+# Application-specific configuration
+app:
+    # This sets the container image more information can be found here:
+    # https://kubernetes.io/docs/concepts/containers/images/
+    image:
+        repository: ""
+        # This sets the pull policy for images.
+        pullPolicy: IfNotPresent
+        # Overrides the image tag whose default is the chart appVersion.
+        tag: ""
+    # Container ports for the application. Each port requires a name, containerPort, and protocol.
+    ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+    # Environment variables for the container. More information can be found here:
+    # https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/
+    env: []
+    # Example:
+    # - name: MY_ENV_VAR
+    #   value: "my-value"
+    # - name: SECRET_USERNAME
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: my-secret
+    #       key: username
+    # - name: CONFIG_KEY
+    #   valueFrom:
+    #     configMapKeyRef:
+    #       name: my-config
+    #       key: special.key
+    # - name: NODE_NAME
+    #   valueFrom:
+    #     fieldRef:
+    #       fieldPath: spec.nodeName
+    # - name: POD_IP
+    #   valueFrom:
+    #     fieldRef:
+    #       fieldPath: status.podIP
+    # - name: CPU_REQUEST
+    #   valueFrom:
+    #     resourceFieldRef:
+    #       containerName: container-name
+    #       resource: requests.cpu
+    # List of sources to populate environment variables in the container.
+    # More information can be found here:
+    # https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables
+    envFrom: []
+    # Example:
+    # - configMapRef:
+    #     name: my-config
+    # - secretRef:
+    #     name: my-secret
+    # - prefix: DB_
+    #   configMapRef:
+    #     name: database-config
+    # - prefix: APP_
+    #   secretRef:
+    #     name: app-secret
+    # Override the default container command (equivalent to ENTRYPOINT in Dockerfile)
+    # More information can be found here: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+    command: []
+    # Example:
+    # - /bin/sh
+    # - -c
+    # - echo "Hello World"
+    # Override the default container arguments (equivalent to CMD in Dockerfile)
+    args: []
+    # Example:
+    # - --port
+    # - "8080"
+    # - --config
+    # - /etc/config.yaml
+
+# Init containers are specialized containers that run before app containers in a Pod.
+# More information can be found here:
+# https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+# NOTE: Init containers inherit security settings from podSecurityContext (runAsUser, runAsGroup, fsGroup, seccompProfile).
+# Add container-level securityContext for additional hardening (e.g., readOnlyRootFilesystem, capabilities).
+initContainers: []
+# Example:
+# - name: init-myservice
+#   image: busybox:1.28
+#   command: ['sh', '-c', "until nslookup myservice.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for myservice; sleep 2; done"]
+# - name: init-mydb
+#   image: busybox:1.28
+#   command: ['sh', '-c', 'until nslookup mydb.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done']
+# - name: download-config
+#   image: busybox:1.28
+#   command: ['sh', '-c', 'wget -O /work-dir/config.json http://config-service/config.json']
+#   securityContext:
+#     allowPrivilegeEscalation: false
+#     readOnlyRootFilesystem: true
+#     capabilities:
+#       drop:
+#       - ALL
+#   volumeMounts:
+#   - name: workdir
+#     mountPath: /work-dir
+
+# Sidecar containers run alongside the main application container in the same Pod.
+# More information can be found here:
+# https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/
+# NOTE: Sidecars inherit security settings from podSecurityContext (runAsUser, runAsGroup, fsGroup, seccompProfile).
+# Add container-level securityContext for additional hardening (e.g., readOnlyRootFilesystem, capabilities).
+sidecars: []
+# Example:
+# - name: log-shipper
+#   image: fluent/fluent-bit:2.0
+#   securityContext:
+#     allowPrivilegeEscalation: false
+#     readOnlyRootFilesystem: true
+#     capabilities:
+#       drop:
+#       - ALL
+#   env:
+#   - name: FLUENT_ELASTICSEARCH_HOST
+#     value: "elasticsearch"
+#   - name: FLUENT_ELASTICSEARCH_PORT
+#     value: "9200"
+#   volumeMounts:
+#   - name: varlog
+#     mountPath: /var/log
+#   resources:
+#     limits:
+#       memory: "128Mi"
+#       cpu: "100m"
+#     requests:
+#       memory: "64Mi"
+#       cpu: "50m"
+# - name: metrics-exporter
+#   image: prom/statsd-exporter:v0.26.0
+#   securityContext:
+#     allowPrivilegeEscalation: false
+#     readOnlyRootFilesystem: true
+#     capabilities:
+#       drop:
+#       - ALL
+#   ports:
+#   - name: metrics
+#     containerPort: 9102
+#     protocol: TCP
+#   args:
+#   - "--statsd.mapping-config=/etc/statsd/statsd-mapping.conf"
+#   volumeMounts:
+#   - name: statsd-config
+#     mountPath: /etc/statsd
+#   resources:
+#     limits:
+#       memory: "64Mi"
+#       cpu: "50m"
+#     requests:
+#       memory: "32Mi"
+#       cpu: "25m"
+
+# This is for the secrets for pulling an image from a private repository more information can be found here:
+# https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+imagePullSecrets: []
+
+# This section builds out the service account more information can be found here:
+# https://kubernetes.io/docs/concepts/security/service-accounts/
+serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Automatically mount a ServiceAccount's API credentials?
+    # Defaults to false for security; enable only when pods need Kubernetes API access.
+    automount: false
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+# This section is for RBAC (Role-Based Access Control) configuration more information can be found here:
+# https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+rbac:
+    # Specifies whether RBAC resources should be created
+    create: false
+    # RBAC Role configuration
+    role:
+        # Annotations to add to the Role
+        annotations: {}
+        # Labels to add to the Role (in addition to default labels)
+        labels: {}
+        # Rules for the Role - define API groups, resources, and verbs
+        rules: []
+        # Example:
+        # - apiGroups: [""]
+        #   resources: ["pods"]
+        #   verbs: ["get", "list", "watch"]
+        # - apiGroups: [""]
+        #   resources: ["configmaps"]
+        #   verbs: ["get", "list", "watch", "create", "update", "patch"]
+        # - apiGroups: ["apps"]
+        #   resources: ["deployments"]
+        #   verbs: ["get", "list", "watch"]
+    # RBAC RoleBinding configuration
+    roleBinding:
+        # Annotations to add to the RoleBinding
+        annotations: {}
+        # Labels to add to the RoleBinding (in addition to default labels)
+        labels: {}
+    # RBAC ClusterRole configuration
+    clusterRole:
+        # Specifies whether a ClusterRole should be created
+        enabled: false
+        # Annotations to add to the ClusterRole
+        annotations: {}
+        # Labels to add to the ClusterRole (in addition to default labels)
+        labels: {}
+        # Rules for the ClusterRole - define API groups, resources, and verbs
+        rules: []
+        # Example:
+        # - apiGroups: [""]
+        #   resources: ["nodes"]
+        #   verbs: ["get", "list", "watch"]
+        # - apiGroups: [""]
+        #   resources: ["namespaces"]
+        #   verbs: ["get", "list", "watch"]
+        # - apiGroups: ["apps"]
+        #   resources: ["deployments"]
+        #   verbs: ["get", "list", "watch"]
+        # - apiGroups: ["rbac.authorization.k8s.io"]
+        #   resources: ["clusterroles", "clusterrolebindings"]
+        #   verbs: ["get", "list", "watch"]
+    # RBAC ClusterRoleBinding configuration
+    clusterRoleBinding:
+        # Specifies whether a ClusterRoleBinding should be created (only if clusterRole.enabled is true)
+        enabled: false
+        # Annotations to add to the ClusterRoleBinding
+        annotations: {}
+        # Labels to add to the ClusterRoleBinding (in addition to default labels)
+        labels: {}
+
+# This is for setting Kubernetes Annotations to a Deployment.
+# For more information checkout:
+# https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+deploymentAnnotations: {}
+
+# This is for setting Kubernetes Labels to a Deployment (in addition to default labels).
+# For more information checkout:
+# https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+deploymentLabels: {}
+
+# This is for setting Kubernetes Annotations to a Pod.
+# For more information checkout:
+# https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+podAnnotations: {}
+
+# This is for setting Kubernetes Labels to a Pod.
+# For more information checkout:
+# https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+podLabels: {}
+
+# Pod-level security context applies to all containers (main app, init containers, and sidecars).
+# These settings are inherited by all containers unless explicitly overridden at the container level.
+# More information: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+        type: RuntimeDefault
+
+# Enable or disable service links (environment variables for services)
+# More information: https://kubernetes.io/docs/concepts/services-networking/service/#environment-variables
+enableServiceLinks: false
+
+# Container-level security context for the main application container.
+# These settings supplement the pod-level security context with container-specific hardening.
+# Init containers and sidecars should define their own securityContext following this example.
+securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+        drop:
+            - ALL
+        # Add back specific capabilities if needed, e.g.:
+        # add:
+        # - NET_BIND_SERVICE  # Required for binding to ports < 1024
+
+# This is for setting up a service more information can be found here:
+# https://kubernetes.io/docs/concepts/services-networking/service/
+service:
+    enabled: true
+    # This sets the service type more information can be found here:
+    # https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+    type: ClusterIP
+    # This sets the ports more information can be found here:
+    # https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
+    # Each port requires a name, port, targetPort (references port name from app.ports), and protocol.
+    ports:
+        - name: http
+          port: 80
+          targetPort: http
+          protocol: TCP
+    # Annotations to add to the service
+    annotations: {}
+
+# This section is for setting up a ConfigMap more information can be found here:
+# https://kubernetes.io/docs/concepts/configuration/configmap/
+configmap:
+    # Specifies whether a ConfigMap should be created
+    enabled: false
+    # The name of the ConfigMap to use. If not set and enabled is true, a name is generated using the fullname template
+    name: ""
+    # ConfigMap annotations
+    annotations: {}
+    # ConfigMap labels
+    labels: {}
+    # Data contains the configuration data. Each key-value pair in the data map will be projected into the ConfigMap.
+    data: {}
+    # BinaryData contains the binary configuration data. Each key-value pair in the binaryData map will be projected into the ConfigMap.
+    binaryData: {}
+    # Automatically mount the ConfigMap as a volume
+    mount:
+        # Enable automatic mounting of the ConfigMap
+        enabled: true
+        # Path where the ConfigMap should be mounted in the container
+        mountPath: "/etc/config"
+        # Mount the ConfigMap as read-only (recommended)
+        readOnly: true
+        # SubPath for mounting a single file from the ConfigMap
+        subPath: ""
+        # Specify which keys to mount and their paths (optional)
+        # If not specified, all keys in the ConfigMap will be mounted
+        items: []
+        # Example:
+        # - key: config.yaml
+        #   path: config.yaml
+
+# This block is for setting up the ingress for more information can be found here:
+# https://kubernetes.io/docs/concepts/services-networking/ingress/
+ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts: []
+        # dnsZone will be appended automatically
+        # - host:
+        #   paths:
+        #     - path: /
+        #       pathType: ImplementationSpecific
+        # port specifies which service port to use (by port number).
+        # If not set, uses the first port in service.ports.
+        # port: 80
+    tls: []
+
+# -- Expose the service via gateway-api HTTPRoute
+# Requires Gateway API resources and suitable controller installed within the cluster
+# (see: https://gateway-api.sigs.k8s.io/guides/)
+httpRoute:
+    # HTTPRoute enabled.
+    enabled: false
+    # HTTPRoute annotations.
+    annotations: {}
+    # Which Gateways this Route is attached to.
+    parentRefs:
+        - name: gateway
+          sectionName: http
+          # namespace: default
+    # Hostnames matching HTTP header.
+    hostnames: []
+    # dnsZone will be appended automatically
+    # - service
+    # List of rules and filters applied.
+    rules:
+        - matches:
+              - path:
+                    type: PathPrefix
+                    value: /headers
+          # port specifies which service port to use (by port number).
+          # If not set, uses the first port in service.ports.
+          # port: 80
+          # weight specifies the proportion of requests forwarded to the referenced backend.
+          # If not set, defaults to 1.
+          # weight: 1
+
+resources: {}
+    # Example:
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+# This is to setup the liveness and readiness probes more information can be found here:
+# https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe: {}
+    # Example:
+    # httpGet:
+    #   path: /
+    #   port: http
+readinessProbe: {}
+    # Example:
+    # httpGet:
+    #   path: /
+    #   port: http
+startupProbe: {}
+    # Example:
+    # httpGet:
+    #   path: /
+    #   port: http
+    # failureThreshold: 30
+    # periodSeconds: 10
+
+# This section is for setting up autoscaling more information can be found here:
+# https://kubernetes.io/docs/concepts/workloads/autoscaling/
+autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+    # Scaling behavior controls how fast the HPA scales up/down
+    # More info: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#configurable-scaling-behavior
+    behavior:
+        scaleDown:
+            # Stabilization window prevents flapping by waiting before scaling down
+            stabilizationWindowSeconds: 300
+            policies:
+                - type: Percent
+                  value: 50
+                  periodSeconds: 60
+                - type: Pods
+                  value: 2
+                  periodSeconds: 60
+            # selectPolicy: Max (default) chooses the policy that scales down the most
+            # Use Min to scale down conservatively
+            selectPolicy: Max
+        scaleUp:
+            stabilizationWindowSeconds: 0
+            policies:
+                - type: Percent
+                  value: 100
+                  periodSeconds: 30
+                - type: Pods
+                  value: 4
+                  periodSeconds: 30
+            selectPolicy: Max
+    # Custom metrics for more advanced scaling scenarios
+    # Requires metrics-server and/or custom metrics API (like Prometheus adapter)
+    customMetrics: []
+    # Examples:
+    # - type: Pods
+    #   pods:
+    #     metric:
+    #       name: http_requests_per_second
+    #     target:
+    #       type: AverageValue
+    #       averageValue: "1000"
+    # - type: Object
+    #   object:
+    #     metric:
+    #       name: requests-per-second
+    #     describedObject:
+    #       apiVersion: networking.k8s.io/v1
+    #       kind: Ingress
+    #       name: main-route
+    #     target:
+    #       type: Value
+    #       value: "10k"
+    # - type: External
+    #   external:
+    #     metric:
+    #       name: queue_messages_ready
+    #       selector:
+    #         matchLabels:
+    #           queue: worker_tasks
+    #     target:
+    #       type: AverageValue
+    #       averageValue: "30"
+    # Container resource metrics allow targeting specific containers in multi-container pods
+    containerMetrics: []
+    # Examples:
+    # - type: ContainerResource
+    #   containerResource:
+    #     name: cpu
+    #     container: application
+    #     target:
+    #       type: Utilization
+    #       averageUtilization: 75
+    # - type: ContainerResource
+    #   containerResource:
+    #     name: memory
+    #     container: application
+    #     target:
+    #       type: Utilization
+    #       averageUtilization: 80
+
+volumes: []
+# Example:
+# - name: config-volume
+#   configMap:
+#     # Omit 'name' (or leave empty) to automatically use the ConfigMap created by this chart
+#     # This only works when configmap.enabled is true
+#     # name: ""
+#   # Specify a custom ConfigMap name:
+# - name: custom-config-volume
+#   configMap:
+#     name: my-custom-config
+# - name: secret-volume
+#   secret:
+#     secretName: my-secret
+# - name: cache-volume
+#   emptyDir: {}
+# - name: host-volume
+#   hostPath:
+#     path: /data
+#     type: Directory
+# - name: podinfo
+#   downwardAPI:
+#     items:
+#     - path: "labels"
+#       fieldRef:
+#         fieldPath: metadata.labels
+# - name: projected-volume
+#   projected:
+#     sources:
+#     - secret:
+#         name: mysecret
+#         items:
+#         - key: username
+#           path: my-group/my-username
+#     - configMap:
+#         name: myconfigmap
+#         items:
+#         - key: config
+#           path: my-group/my-config
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# Example:
+# - name: config-volume
+#   mountPath: /etc/config
+# - name: secret-volume
+#   mountPath: /etc/secrets
+#   readOnly: true
+# - name: cache-volume
+#   mountPath: /tmp/cache
+# - name: host-volume
+#   mountPath: /mnt/data
+# - name: podinfo
+#   mountPath: /etc/podinfo
+# - name: projected-volume
+#   mountPath: /etc/projected
+
+persistentVolumes: []
+    # Example:
+    # - name: data
+    #   mountPath: /data
+    #   storageClassName: standard
+    #   accessModes:
+    #     - ReadWriteOnce
+    #   storage: "10Gi"
+    #   volumeMode: Filesystem  # Optional: Filesystem or Block
+    #   selector: {}  # Optional: Label selector for binding to specific PVs
+    #   volumeName: ""  # Optional: Name of pre-bound PersistentVolume
+
+nodeSelector: {}
+    # Example:
+    # kubernetes.io/os: linux
+
+tolerations: []
+# Example:
+# - key: "key1"
+#   operator: "Equal"
+#   value: "value1"
+#   effect: "NoSchedule"
+
+affinity:
+    # Example:
+    # nodeAffinity:
+    #   requiredDuringSchedulingIgnoredDuringExecution:
+    #     nodeSelectorTerms:
+    #     - matchExpressions:
+    #       - key: kubernetes.io/os
+    #         operator: In
+    #         values:
+    #         - linux
+
+# This section is for configuring pod topology spread constraints more information can be found here:
+# https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/
+topologySpreadConstraints: []
+# Example configurations:
+# Spread pods across availability zones:
+# - maxSkew: 1
+#   topologyKey: topology.kubernetes.io/zone
+#   whenUnsatisfiable: DoNotSchedule
+#   labelSelector:
+#     matchLabels:
+#       app.kubernetes.io/name: base
+#       app.kubernetes.io/instance: my-release
+# Spread pods across nodes:
+# - maxSkew: 1
+#   topologyKey: kubernetes.io/hostname
+#   whenUnsatisfiable: ScheduleAnyway
+#   labelSelector:
+#     matchLabels:
+#       app.kubernetes.io/name: base
+#       app.kubernetes.io/instance: my-release
+# Multiple constraints for comprehensive HA:
+# - maxSkew: 1
+#   topologyKey: topology.kubernetes.io/zone
+#   whenUnsatisfiable: DoNotSchedule
+#   labelSelector:
+#     matchLabels:
+#       app.kubernetes.io/name: base
+#       app.kubernetes.io/instance: my-release
+# - maxSkew: 2
+#   topologyKey: kubernetes.io/hostname
+#   whenUnsatisfiable: ScheduleAnyway
+#   labelSelector:
+#     matchLabels:
+#       app.kubernetes.io/name: base
+#       app.kubernetes.io/instance: my-release
+
+# This section is for setting up a Pod Disruption Budget more information can be found here:
+# https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
+podDisruptionBudget:
+    # Specifies whether a PodDisruptionBudget should be created
+    enabled: false
+    # Minimum number of pods that must be available after eviction, mutually exclusive with maxUnavailable
+    minAvailable: 1
+    # Maximum number of pods that can be unavailable after eviction, mutually exclusive with minAvailable
+    maxUnavailable: null
+    # PDB annotations
+    annotations: {}
+    # PDB labels
+    labels: {}
+
+# This section is for setting up a ServiceMonitor for Prometheus Operator more information can be found here:
+# https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.ServiceMonitorSpec
+serviceMonitor:
+    # Specifies whether a ServiceMonitor should be created
+    enabled: false
+    # ServiceMonitor annotations
+    annotations: {}
+    # ServiceMonitor labels (in addition to default labels)
+    labels: {}
+    # The label to use to retrieve the job name from
+    jobLabel: ""
+    # Additional selector labels to match services
+    selector: {}
+    # List of endpoints to scrape metrics from
+    endpoints:
+        - port: http
+          # Interval at which metrics should be scraped (e.g., 30s, 1m)
+          interval: 30s
+          # Timeout after which the scrape is ended (e.g., 10s)
+          scrapeTimeout: 10s
+          # HTTP path to scrape for metrics
+          path: /metrics
+          # HTTP scheme to use for scraping (http or https)
+          scheme: http
+          # Honor labels from the scraped metrics
+          honorLabels: false
+          # Honor timestamps from the scraped metrics
+          honorTimestamps: true
+          # Optional: Enable HTTP2 for scraping
+          # enableHttp2: true
+          # Optional: Follow redirects during scraping
+          # followRedirects: true
+          # Optional: Additional parameters for the scrape request
+          # params: {}
+          # Optional: Relabeling configs to apply to samples before ingestion
+          # relabelings: []
+          # Optional: MetricRelabelings to apply to samples before ingestion
+          # metricRelabelings: []
+          # Optional: TLS configuration for scraping
+          # tlsConfig: {}
+          # Optional: Basic authentication for scraping
+          # basicAuth: {}
+          # Optional: Bearer token file for authentication
+          # bearerTokenFile: ""
+          # Optional: Bearer token secret for authentication
+          # bearerTokenSecret: {}
+          # Optional: OAuth2 configuration for scraping
+          # oauth2: {}
+          # Optional: Authorization configuration for scraping
+          # authorization: {}
+          # Optional: Proxy URL for scraping
+          # proxyUrl: ""
+          # Optional: Filter running targets
+          # filterRunning: true
+    # Attach metadata to discovered targets
+    # attachMetadata:
+    #   node: false
+    # Namespace selector for the ServiceMonitor
+    # namespaceSelector: {}
+    # Target labels to transfer from the Kubernetes Service onto the target
+    # targetLabels: []
+    # Pod target labels to transfer from the Kubernetes Pod onto the target
+    # podTargetLabels: []
+    # Sample limit per scrape
+    # sampleLimit: 0
+    # Target limit for this ServiceMonitor
+    # targetLimit: 0
+    # Label limit per scrape
+    # labelLimit: 0
+    # Label name length limit per scrape
+    # labelNameLengthLimit: 0
+    # Label value length limit per scrape
+    # labelValueLengthLimit: 0
+    # Keep dropped targets (for debugging)
+    # keepDroppedTargets: 0
+    # Scrape class name to use
+    # scrapeClassName: ""
+    # Scrape protocols to use (e.g., OpenMetricsText1.0.0, PrometheusText0.0.4)
+    # scrapeProtocols: []
+    # Body size limit for scrapes
+    # bodySizeLimit: ""
+    # Example:
+    # endpoints:
+    #   - port: metrics
+    #     interval: 30s
+    #     path: /metrics
+    #     scheme: https
+    #     tlsConfig:
+    #       insecureSkipVerify: true
+    #     relabelings:
+    #       - sourceLabels: [__meta_kubernetes_pod_name]
+    #         targetLabel: pod
+    #       - sourceLabels: [__meta_kubernetes_namespace]
+    #         targetLabel: namespace
+    #     metricRelabelings:
+    #       - sourceLabels: [__name__]
+    #         regex: 'go_.*'
+    #         action: drop
+    #     authorization:
+    #       type: Bearer
+    #       credentials:
+    #         name: my-secret
+    #         key: token
+
+# This section is for setting up PrometheusRule resources more information can be found here:
+# https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule
+prometheusRule:
+    # Specifies whether PrometheusRule resources should be created
+    enabled: false
+    # The prometheus label used to match which Prometheus instances should load these rules
+    prometheusLabel: ""
+    # List of PrometheusRule configurations
+    rules: []
+    # Example:
+    # rules:
+    #   - name: example-alerts
+    #     groups:
+    #       - name: example
+    #         rules:
+    #           - alert: HighRequestLatency
+    #             expr: http_request_duration_seconds{quantile="0.5"} > 0.5
+    #             for: 10m
+    #             labels:
+    #               severity: warning
+    #             annotations:
+    #               summary: High request latency
+    #   - name: example-recordings
+    #     groups:
+    #       - name: example
+    #         rules:
+    #           - record: job:http_requests_total:rate5m
+    #             expr: rate(http_requests_total[5m])

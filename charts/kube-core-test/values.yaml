@@ -1,0 +1,122 @@
+# Default test values — minimal valid configuration
+alpha:
+  enabled: true
+  environment: "dev"
+  dnsZone: "example.com"
+  replicaCount: 2
+  app:
+    image:
+      repository: nginx
+      tag: "1.25.0"
+      pullPolicy: IfNotPresent
+    ports:
+      - name: http
+        containerPort: 8080
+        protocol: TCP
+  serviceAccount:
+    create: true
+    automount: false
+    annotations: {}
+    name: ""
+  rbac:
+    create: false
+  deploymentAnnotations: {}
+  deploymentLabels: {}
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+      type: RuntimeDefault
+  enableServiceLinks: false
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  service:
+    enabled: true
+    type: ClusterIP
+    ports:
+      - name: http
+        port: 80
+        targetPort: http
+        protocol: TCP
+    annotations: {}
+  configmap:
+    enabled: false
+    name: ""
+    annotations: {}
+    labels: {}
+    data: {}
+    binaryData: {}
+    mount:
+      enabled: true
+      mountPath: "/etc/config"
+      readOnly: true
+      subPath: ""
+      items: []
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts: []
+    tls: []
+  httpRoute:
+    enabled: false
+    annotations: {}
+    parentRefs: []
+    hostnames: []
+    rules: []
+  resources: {}
+  livenessProbe: {}
+  readinessProbe: {}
+  startupProbe: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+    behavior: {}
+    customMetrics: []
+    containerMetrics: []
+  initContainers: []
+  sidecars: []
+  imagePullSecrets: []
+  volumes: []
+  volumeMounts: []
+  persistentVolumes: []
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+    maxUnavailable: null
+    annotations: {}
+    labels: {}
+  serviceMonitor:
+    enabled: false
+    annotations: {}
+    labels: {}
+    jobLabel: ""
+    selector: {}
+    endpoints:
+      - port: http
+        interval: 30s
+        scrapeTimeout: 10s
+        path: /metrics
+        scheme: http
+        honorLabels: false
+        honorTimestamps: true
+  prometheusRule:
+    enabled: false
+    prometheusLabel: ""
+    rules: []

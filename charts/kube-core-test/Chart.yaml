@@ -1,0 +1,10 @@
+apiVersion: v2
+name: kube-core-test
+description: Test harness for the kube-core library chart
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+dependencies:
+    - name: kube-core
+      version: 0.1.0
+      repository: "file://../kube-core"

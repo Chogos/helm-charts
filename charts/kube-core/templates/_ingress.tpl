@@ -32,14 +32,14 @@ spec:
     {{- range $svc.ingress.tls }}
     - hosts:
         {{- range .hosts }}
-        - {{ include "common.hostname" (dict "host" . "context" $ctx "service" $svc) | quote }}
+        - {{ . | quote }}
         {{- end }}
       secretName: {{ required "secretName is required for TLS" .secretName }}
     {{- end }}
   {{- end }}
   rules:
     {{- range $svc.ingress.hosts }}
-    - host: {{ include "common.hostname" (dict "host" .host "context" $ctx "service" $svc) | quote }}
+    - host: {{ .host | quote }}
       http:
         paths:
           {{- range .paths }}

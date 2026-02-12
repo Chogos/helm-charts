@@ -10,22 +10,6 @@
             "default": true,
             "description": "Enable or disable this service"
         },
-        "environment": {
-            "type": "string",
-            "description": "Deployment environment (e.g., dev, qa, sqa, nga, prod). Used in hostname generation."
-        },
-        "subenvironment": {
-            "type": "string",
-            "description": "Sub-environment within the environment (e.g., dev-a, dev-b). Used in hostname generation."
-        },
-        "tenantId": {
-            "type": "string",
-            "description": "Tenant identifier for single-tenant deployments. Used in hostname generation."
-        },
-        "dnsZone": {
-            "type": "string",
-            "description": "DNS zone for constructing hostnames (e.g., example.com)"
-        },
         "nameOverride": {
             "type": "string",
             "description": "Override the chart name used in resource names"
@@ -480,7 +464,7 @@
                         "properties": {
                             "host": {
                                 "type": "string",
-                                "description": "Hostname (dnsZone appended automatically)"
+                                "description": "Fully qualified hostname"
                             },
                             "paths": {
                                 "type": "array",
@@ -577,7 +561,7 @@
                     "items": {
                         "type": "string"
                     },
-                    "description": "Hostnames (dnsZone appended automatically)"
+                    "description": "Fully qualified hostnames"
                 },
                 "rules": {
                     "type": "array",

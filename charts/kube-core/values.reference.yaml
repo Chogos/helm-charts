@@ -33,18 +33,6 @@
 # enable indicates whether to deploy this chart
 enabled: true
 
-# environment is the deployment environment (e.g., dev, qa, sqa, nga, prod)
-environment: ""
-
-# subenvironment is the sub-environment within the environment (e.g., dev-a, dev-b)
-subenvironment: ""
-
-# tenantId is the tenant identifier for single-tenant deployments, used in hostname generation
-tenantId: ""
-
-# DNS zone for constructing hostnames
-dnsZone: ""
-
 # This is to override the chart name.
 nameOverride: ""
 fullnameOverride: ""
@@ -393,7 +381,6 @@ ingress:
     className: ""
     annotations: {}
     hosts: []
-        # dnsZone will be appended automatically
         # - host:
         #   paths:
         #     - path: /
@@ -418,8 +405,7 @@ httpRoute:
           # namespace: default
     # Hostnames matching HTTP header.
     hostnames: []
-    # dnsZone will be appended automatically
-    # - service
+    # - service.example.com
     # List of rules and filters applied.
     rules:
         - matches:

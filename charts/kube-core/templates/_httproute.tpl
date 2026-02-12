@@ -29,7 +29,7 @@ spec:
   {{- if $svc.httpRoute.hostnames }}
   hostnames:
     {{- range $svc.httpRoute.hostnames }}
-    - {{ include "common.hostname" (dict "host" . "context" $ctx "service" $svc) | quote }}
+    - {{ . | quote }}
     {{- end }}
   {{- end }}
   rules:

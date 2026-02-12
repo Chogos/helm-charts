@@ -1,8 +1,6 @@
 # Default test values — minimal valid configuration
 alpha:
   enabled: true
-  environment: "dev"
-  dnsZone: "example.com"
   replicaCount: 2
   app:
     image:

@@ -23,8 +23,6 @@ A library chart that exposes named templates for downstream charts to generate K
 
 Key features:
 
-- Multi-environment hostname generation (`{host}[-{subenv}][.{env}].{dnsZone}`)
-- Tenant-aware configuration
 - Advanced HPA scaling policies with custom metrics
 - Full RBAC and monitoring (ServiceMonitor / PrometheusRule)
 

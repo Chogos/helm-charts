@@ -118,44 +118,6 @@ Service account name for the service.
 {{- end -}}
 
 {{/*
-Generate hostname with pattern: {host}[-{subenvironment}][.{environment}].{dnsZone}
-Expects dict with: host, context (root $), service
-Supports values at service level, root level, or global level (in that priority order)
-*/}}
-{{- define "common.hostname" -}}
-{{- $host := .host -}}
-{{- $ctx := .context -}}
-{{- $svc := .service -}}
-{{- $global := $ctx.Values.global | default dict -}}
-{{- $environment := $svc.environment | default $ctx.Values.environment | default $global.environment -}}
-{{- $subenvironment := $svc.subenvironment | default $ctx.Values.subenvironment | default $global.subenvironment -}}
-{{- $tenantId := $svc.tenantId | default $ctx.Values.tenantId | default $global.tenantId -}}
-{{- $dnsZone := $svc.dnsZone | default $ctx.Values.dnsZone | default $global.dnsZone -}}
-{{- if not $dnsZone -}}
-{{- fail "dnsZone is required but not set (set at service, root, or global.dnsZone level)" -}}
-{{- end -}}
-{{- $baseHost := "" -}}
-{{- if $subenvironment -}}
-{{- if $tenantId -}}
-{{- $baseHost = printf "%s-%s-%s" $host $tenantId $subenvironment -}}
-{{- else -}}
-{{- $baseHost = printf "%s-%s" $host $subenvironment -}}
-{{- end -}}
-{{- else -}}
-{{- if $tenantId -}}
-{{- $baseHost = printf "%s-%s" $host $tenantId -}}
-{{- else -}}
-{{- $baseHost = $host -}}
-{{- end -}}
-{{- end -}}
-{{- if and $environment (ne $environment "prod") -}}
-{{- printf "%s.%s.%s" $baseHost $environment $dnsZone -}}
-{{- else -}}
-{{- printf "%s.%s" $baseHost $dnsZone -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
 ConfigMap name for the service.
 */}}
 {{- define "common.configMapName" -}}
@@ -194,10 +156,6 @@ They delegate to common.* templates using root context.
 
 {{- define "base.serviceAccountName" -}}
 {{- include "common.serviceAccountName" (dict "context" . "service" .Values) -}}
-{{- end -}}
-
-{{- define "base.hostname" -}}
-{{- include "common.hostname" (dict "host" .host "context" .root "service" .root.Values) -}}
 {{- end -}}
 
 {{- define "base.configMapName" -}}

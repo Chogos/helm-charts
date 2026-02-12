@@ -1,10 +1,6 @@
 # Full values — every feature enabled for maximum test coverage
 alpha:
   enabled: true
-  environment: "dev"
-  subenvironment: "dev-a"
-  tenantId: "acme"
-  dnsZone: "example.com"
   nameOverride: ""
   fullnameOverride: ""
   replicaCount: 3
@@ -156,14 +152,14 @@ alpha:
     annotations:
       cert-manager.io/cluster-issuer: "letsencrypt"
     hosts:
-      - host: alpha
+      - host: alpha.dev.example.com
         paths:
           - path: /
             pathType: Prefix
     tls:
       - secretName: alpha-tls
         hosts:
-          - alpha
+          - alpha.dev.example.com
   httpRoute:
     enabled: false
     annotations: {}

@@ -1,8 +1,6 @@
 # Multi-service test — validates name isolation between services
 alpha:
   enabled: true
-  environment: "qa"
-  dnsZone: "example.com"
   replicaCount: 2
   app:
     image:
@@ -115,8 +113,6 @@ alpha:
 
 bravo:
   enabled: true
-  environment: "qa"
-  dnsZone: "example.com"
   replicaCount: 1
   app:
     image:

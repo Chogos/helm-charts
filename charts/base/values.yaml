@@ -1,3 +1,10 @@
+# enable indicates whether to deploy this chart
+enabled: true
+
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
 # This will set the replicaset count more information can be found here:
 # https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1
@@ -152,9 +159,6 @@ sidecars: []
 # This is for the secrets for pulling an image from a private repository more information can be found here:
 # https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
-# This is to override the chart name.
-nameOverride: ""
-fullnameOverride: ""
 
 # This section builds out the service account more information can be found here:
 # https://kubernetes.io/docs/concepts/security/service-accounts/
@@ -162,7 +166,8 @@ serviceAccount:
   # Specifies whether a service account should be created
   create: true
   # Automatically mount a ServiceAccount's API credentials?
-  automount: true
+  # Defaults to false for security; enable only when pods need Kubernetes API access.
+  automount: false
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
@@ -262,6 +267,10 @@ podSecurityContext:
   seccompProfile:
     type: RuntimeDefault
 
+# Enable or disable service links (environment variables for services)
+# More information: https://kubernetes.io/docs/concepts/services-networking/service/#environment-variables
+enableServiceLinks: false
+
 # Container-level security context for the main application container.
 # These settings supplement the pod-level security context with container-specific hardening.
 # Init containers and sidecars should define their own securityContext following this example.
@@ -278,6 +287,7 @@ securityContext:
 # This is for setting up a service more information can be found here:
 # https://kubernetes.io/docs/concepts/services-networking/service/
 service:
+  enabled: true
   # This sets the service type more information can be found here:
   # https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
@@ -294,16 +304,11 @@ service:
 
 # This section is for setting up a ConfigMap more information can be found here:
 # https://kubernetes.io/docs/concepts/configuration/configmap/
-# When enabled, a ConfigMap volume named 'config' is automatically created and mounted.
 configmap:
   # Specifies whether a ConfigMap should be created
   enabled: false
   # The name of the ConfigMap to use. If not set and enabled is true, a name is generated using the fullname template
   name: ""
-  # Automatically mount the ConfigMap at the specified mountPath. Set to false if you need custom mount configuration via volumeMounts.
-  autoMount: true
-  # The path where the ConfigMap should be mounted in the container
-  mountPath: /etc/config
   # ConfigMap annotations
   annotations: {}
   # ConfigMap labels
@@ -312,6 +317,22 @@ configmap:
   data: {}
   # BinaryData contains the binary configuration data. Each key-value pair in the binaryData map will be projected into the ConfigMap.
   binaryData: {}
+  # Automatically mount the ConfigMap as a volume
+  mount:
+    # Enable automatic mounting of the ConfigMap
+    enabled: true
+    # Path where the ConfigMap should be mounted in the container
+    mountPath: "/etc/config"
+    # Mount the ConfigMap as read-only (recommended)
+    readOnly: true
+    # SubPath for mounting a single file from the ConfigMap
+    subPath: ""
+    # Specify which keys to mount and their paths (optional)
+    # If not specified, all keys in the ConfigMap will be mounted
+    items: []
+    # Example:
+    # - key: config.yaml
+    #   path: config.yaml
 
 # This block is for setting up the ingress for more information can be found here:
 # https://kubernetes.io/docs/concepts/services-networking/ingress/
@@ -319,14 +340,14 @@ ingress:
   enabled: false
   className: ""
   annotations: {}
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-          # port specifies which service port to use (by port number).
-          # If not set, uses the first port in service.ports.
-          # port: 80
+  hosts: []
+    # - host:
+    #   paths:
+    #     - path: /
+    #       pathType: ImplementationSpecific
+    # port specifies which service port to use (by port number).
+    # If not set, uses the first port in service.ports.
+    # port: 80
   tls: []
 
 # -- Expose the service via gateway-api HTTPRoute
@@ -343,8 +364,8 @@ httpRoute:
     sectionName: http
     # namespace: default
   # Hostnames matching HTTP header.
-  hostnames:
-  - chart-example.local
+  hostnames: []
+  # - service.example.com
   # List of rules and filters applied.
   rules:
   - matches:
@@ -473,6 +494,15 @@ autoscaling:
 
 volumes: []
 # Example:
+# - name: config-volume
+#   configMap:
+#     # Omit 'name' (or leave empty) to automatically use the ConfigMap created by this chart
+#     # This only works when configmap.enabled is true
+#     # name: ""
+#   # Specify a custom ConfigMap name:
+# - name: custom-config-volume
+#   configMap:
+#     name: my-custom-config
 # - name: secret-volume
 #   secret:
 #     secretName: my-secret
@@ -505,6 +535,8 @@ volumes: []
 # Additional volumeMounts on the output Deployment definition.
 volumeMounts: []
 # Example:
+# - name: config-volume
+#   mountPath: /etc/config
 # - name: secret-volume
 #   mountPath: /etc/secrets
 #   readOnly: true
@@ -524,7 +556,10 @@ persistentVolumes: []
   #   storageClassName: standard
   #   accessModes:
   #     - ReadWriteOnce
-  #   storage: 10Gi
+  #   storage: "10Gi"
+  #   volumeMode: Filesystem  # Optional: Filesystem or Block
+  #   selector: {}  # Optional: Label selector for binding to specific PVs
+  #   volumeName: ""  # Optional: Name of pre-bound PersistentVolume
 
 nodeSelector: {}
   # Example:
